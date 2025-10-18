@@ -10,26 +10,27 @@ export class BoardService {
   constructor(private readonly notationService: NotationService) {}
 
   // constructs the base board
-  constructBoard(): Board {
+  constructBoard(): BoardTile[][] {
     return Array.from({ length: 8 }).map((_, i) => this.generateBoardRow(i));
   }
 
   // rotates the board, default setup is white on top, so rotate for white on bottom
-  rotateBoard(board: Board): Board {
-    const n = board.length;
+  rotateBoard(board: Board): BoardTile[][] {
+    const tiles = board.tiles;
+    const n = tiles.length;
 
     const res = Array.from({ length: n }, () => new Array(n).fill(0));
 
     // Move mat[i][j] to mat[n-i-1][n-j-1]
     for (let i = 0; i < n; i++) {
       for (let j = 0; j < n; j++) {
-        res[i][j] = board[n - i - 1][n - j - 1];
+        res[i][j] = tiles[n - i - 1][n - j - 1];
       }
     }
 
     // Copy result back to original matrix
     for (let i = 0; i < n; i++) {
-      board[i] = res[i].slice();
+      tiles[i] = res[i].slice();
     }
 
     return res;
@@ -41,6 +42,7 @@ export class BoardService {
 
       return {
         id: (x ?? 0) * (y ?? 1),
+        selected: false,
         square: this.calculateTileSquare(x, y),
         color: this.calculateTileColor(x, y),
         piece: this.calculateTilePiece(square),
