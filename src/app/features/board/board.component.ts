@@ -16,7 +16,7 @@ export class BoardComponent implements OnInit {
   board: Board = [];
 
   constructor(private readonly boardService: BoardService) {
-    this.board = this.boardService.constructBoard();
+    this.board = this.boardService.rotateBoard(this.boardService.constructBoard());
 
     console.log(this.board);
   }
