@@ -1,4 +1,4 @@
-import { Component, computed, input, output } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import { Piece } from '../models/pieces/piece.model';
 
 @Component({
@@ -11,13 +11,5 @@ import { Piece } from '../models/pieces/piece.model';
 export class PieceComponent {
   piece = input.required<Piece>();
 
-  handlePieceSelection = output<Piece>();
-
   p = computed(() => this.piece());
-
-  constructor() {}
-
-  onPieceClick() {
-    this.handlePieceSelection.emit(this.p());
-  }
 }

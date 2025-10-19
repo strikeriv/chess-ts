@@ -1,3 +1,3 @@
 @if (p(); as piece) {
-  <img class="hover:cursor-grab" [src]="'assets/pieces/' + piece.color + piece.type + '.png'" alt="Chess Piece" (click)="onPieceClick()" />
+  <img class="hover:cursor-grab disable-dragging" [src]="'assets/pieces/' + piece.color + piece.type + '.png'" alt="Chess Piece" />
 }

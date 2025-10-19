@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Board, BoardTile, TileColor } from '../interfaces/board.interface';
+import { Board, BoardRotation, BoardTile, TileColor } from '../interfaces/board.interface';
 import { NotationService } from './notation/notation.service';
 import { ChessSquare } from './notation/models/notation.model';
 import { BaseBoard } from '../models/board.model';
@@ -41,7 +41,7 @@ export class BoardService {
       const square = this.calculateTileSquare(x, y);
 
       return {
-        id: (x ?? 0) * (y ?? 1),
+        id: x + y,
         selected: false,
         square: this.calculateTileSquare(x, y),
         color: this.calculateTileColor(x, y),
