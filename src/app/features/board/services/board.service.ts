@@ -42,7 +42,7 @@ export class BoardService {
 
       return {
         id: x + y,
-        square: this.calculateTileSquare(x, y),
+        square,
         color: this.calculateTileColor(x, y),
         piece: this.calculateTilePiece(square),
 
