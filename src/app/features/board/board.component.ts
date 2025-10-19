@@ -6,12 +6,15 @@ import { BoardService } from './services/board.service';
 import { NotationService } from './services/notation/notation.service';
 import { MovesService } from './piece/services/moves.service';
 import { MoveType } from './piece/services/interfaces/moves.interface';
+import { PawnService } from './piece/services/piece-moves/pawn.service';
+import { SharedService } from './piece/services/piece-moves/shared.service';
+import { KnightService } from './piece/services/piece-moves/knight.service';
 
 @Component({
   selector: 'app-board',
   standalone: true,
   imports: [CommonModule, PieceComponent],
-  providers: [BoardService, NotationService, MovesService],
+  providers: [BoardService, KnightService, NotationService, MovesService, PawnService, SharedService],
   templateUrl: './board.component.html',
   styleUrl: './board.component.scss',
 })
@@ -52,20 +55,35 @@ export class BoardComponent {
       this.movePieceToTile(tile);
     } else if (isCapture) {
       this.capturePieceOnTile(tile);
+    } else if (tile.piece) {
+      this.onPieceSelected(tile);
     } else {
-      if (tile.piece) {
-        this.onPieceSelected(tile);
-      } else {
-        // do nothing
-        this.clearBoardFeatures();
-      }
+      // do nothing
+      this.clearBoardFeatures();
     }
   }
 
   private onPieceSelected(tile: BoardTile): void {
-    tile.isSelected = true;
+    // TODO: there's a bug here when deselecting and selecting the same piece multiple tiles
+    // fix at some time idk
+    if (this.selectedTile) {
+      if (this.selectedTile.square === tile.square) {
+        // deselect the piece, since you clicked on the same one
+        this.clearHighlightedTile();
+      } else {
+        this.clearHighlightedTile();
 
-    // // calculate valid moves for selected piece
+        tile.isSelected = true;
+      }
+    } else {
+      tile.isSelected = true;
+    }
+
+    //calculate valid moves for selected piece
+    // clear previous
+    this.hintedTiles = [];
+    this.capturedTiles = [];
+
     const moves = this.movesService.calculateMovesForPiece(this.tiles(), tile);
 
     // for now, highlight the valid moves
@@ -106,8 +124,8 @@ export class BoardComponent {
     this.hintedTiles = [];
     this.capturedTiles = [];
 
-    // deselect the piece
-    this.clearHighlightedPiece();
+    // deselect the tile
+    this.clearHighlightedTile();
   }
 
   private movePieceToTile(tile: BoardTile): void {
@@ -129,8 +147,8 @@ export class BoardComponent {
     this.hintedTiles = [];
     this.capturedTiles = [];
 
-    // deselect the piece
-    this.clearHighlightedPiece();
+    // deselect the tile
+    this.clearHighlightedTile();
   }
 
   private clearBoardFeatures() {
@@ -143,7 +161,7 @@ export class BoardComponent {
     }
   }
 
-  private clearHighlightedPiece() {
+  private clearHighlightedTile() {
     this.selectedTile!.isSelected = false;
     this.selectedTile = undefined;
   }

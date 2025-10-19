@@ -1,14 +1,19 @@
 import { Injectable } from '@angular/core';
 import { BoardTile } from '../../interfaces/board.interface';
 import { PieceColor, PieceType } from '../../models/pieces/piece.model';
-import { ArrayNotation } from '../../services/notation/interfaces/notation.interface';
-import { ChessSquare } from '../../services/notation/models/notation.model';
 import { NotationService } from '../../services/notation/notation.service';
 import { IntermediaryMove, Move, MoveType, MovingPiece } from './interfaces/moves.interface';
+import { PawnService } from './piece-moves/pawn.service';
+import { KnightService } from './piece-moves/knight.service';
 
 @Injectable()
 export class MovesService {
-  constructor(private readonly notationService: NotationService) {}
+  constructor(
+    private readonly notationService: NotationService,
+
+    private readonly knightService: KnightService,
+    private readonly pawnSerive: PawnService,
+  ) {}
 
   calculateMovesForPiece(board: BoardTile[][], tile: BoardTile): Move[] {
     const piece = tile.piece!;
@@ -23,65 +28,12 @@ export class MovesService {
     const moves: IntermediaryMove[] = [];
 
     if (type === PieceType.PAWN) {
-      moves.push(...this.calculatePawnMoves(movingPiece));
+      moves.push(...this.pawnSerive.calculateMoves(movingPiece));
+    } else if (type === PieceType.KNIGHT) {
+      moves.push(...this.knightService.calculateMoves(movingPiece));
     }
 
     return this.calculateValidMoves(board, moves, tile);
-  }
-
-  private calculatePawnMoves(piece: MovingPiece): IntermediaryMove[] {
-    const { direction, square } = piece;
-    const { x } = this.notationService.chessToArrayNotation(square);
-
-    // array for valid moves
-    const moves: IntermediaryMove[] = [
-      {
-        notation: {
-          x: direction * 1,
-          y: 0,
-        },
-        type: MoveType.MOVE,
-      }, // one step forward in correct direction for pawn
-    ];
-
-    // array for valid captures
-    // is cleaned for only valid ones later
-    const captures: IntermediaryMove[] = [
-      {
-        notation: { x: direction * 1, y: direction * 1 },
-        type: MoveType.CAPTURE,
-      }, // left capture
-      {
-        notation: { x: direction * 1, y: direction * -1 },
-        type: MoveType.CAPTURE,
-      }, // right capture
-
-      // en passant moves, way too complicated for right now
-      // {
-      //   notation: { x: direction * 2, y: direction * -1 },
-      //   type: MoveType.CAPTURE,
-      // },
-      // {
-      //   notation: { x: direction * 2, y: direction * 1 },
-      //   type: MoveType.CAPTURE,
-      // },
-    ];
-
-    // check to see if we are doing our first move. if so, allow  two spaces forward
-    // only allowed on starting squares
-    if (x === 1 || x === 6) {
-      const localNotation = this.localMoveToAbsoluteMove(square, moves[0])!; // will always be valid
-
-      moves.push({
-        notation: { x: direction * 2, y: 0 },
-        type: MoveType.MOVE,
-        predecessor: this.notationService.arrayToChessNotation(localNotation.notation),
-      });
-    }
-
-    const absoluteMoves = [...moves, ...captures].map((move) => this.localMoveToAbsoluteMove(square, move)).filter((move): move is IntermediaryMove => move !== null);
-
-    return absoluteMoves;
   }
 
   private calculateValidMoves(board: BoardTile[][], moves: IntermediaryMove[], movingTile: BoardTile): Move[] {
@@ -130,40 +82,6 @@ export class MovesService {
     }
 
     return validMoves;
-  }
-
-  // convert a move to it's absolute move based on tile
-  // returns null when move is out of bounds (off the board)
-  private localMoveToAbsoluteMove(square: ChessSquare, move: IntermediaryMove): IntermediaryMove | null {
-    const { notation, predecessor, type } = move;
-    const { x: mX, y: mY } = notation;
-
-    const { x, y } = this.notationService.chessToArrayNotation(square);
-    const absoluteNotation: ArrayNotation = {
-      x: x + mX,
-      y: y + mY,
-    };
-
-    if (this.isArrayNotationValid(absoluteNotation)) {
-      return {
-        type,
-        notation: absoluteNotation,
-        predecessor,
-      };
-    } else {
-      return null;
-    }
-  }
-
-  // checks to see if move is within board bounds
-  private isArrayNotationValid(notation: ArrayNotation): boolean {
-    try {
-      this.notationService.arrayToChessNotation(notation);
-
-      return true;
-    } catch {
-      return false;
-    }
   }
 
   // check to see if tile is occupied
