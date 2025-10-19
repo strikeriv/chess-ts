@@ -18,9 +18,10 @@ import { MoveType } from './piece/services/interfaces/moves.interface';
 export class BoardComponent {
   tiles: WritableSignal<BoardTile[][]>;
 
-  selectedTiles: BoardTile[] = [];
   capturedTiles: BoardTile[] = [];
   hintedTiles: BoardTile[] = [];
+
+  selectedTile: BoardTile | undefined = undefined;
 
   boardRotation = BoardRotation.NORMAL;
 
@@ -41,40 +42,98 @@ export class BoardComponent {
     this.tiles = signal(initialBoard);
   }
 
-  onPieceSelected(tile: BoardTile) {
-    this.clearBoard();
+  onTileSelected(tile: BoardTile) {
+    this.clearBoardFeatures();
 
-    if (tile.piece) {
-      tile.isSelected = true;
+    const isHinted = this.hintedTiles.find((hT) => hT.square === tile.square);
+    const isCapture = this.capturedTiles.find((cT) => cT.square === tile.square);
 
-      // // calculate valid moves for selected piece
-      const moves = this.movesService.calculateMovesForPiece(this.tiles(), tile);
-
-      // for now, highlight the valid moves
-      for (const move of moves) {
-        const { square, type } = move;
-        const { x, y } = this.notationService.chessToArrayNotation(square);
-
-        const tile = this.tiles()[x][y];
-
-        if (type === MoveType.MOVE) {
-          tile.isHint = true;
-          this.hintedTiles.push(tile);
-        } else if (type === MoveType.CAPTURE) {
-          tile.isCapture = true;
-          this.capturedTiles.push(tile);
-        }
+    if (isHinted) {
+      this.movePieceToTile(tile);
+    } else if (isCapture) {
+      this.capturePieceOnTile(tile);
+    } else {
+      if (tile.piece) {
+        this.onPieceSelected(tile);
+      } else {
+        // do nothing
+        this.clearBoardFeatures();
       }
-
-      this.selectedTiles.push(tile);
     }
   }
 
-  private clearBoard() {
-    for (const tile of this.selectedTiles) {
-      tile.isSelected = false;
+  private onPieceSelected(tile: BoardTile): void {
+    tile.isSelected = true;
+
+    // // calculate valid moves for selected piece
+    const moves = this.movesService.calculateMovesForPiece(this.tiles(), tile);
+
+    // for now, highlight the valid moves
+    for (const move of moves) {
+      const { square, type } = move;
+      const { x, y } = this.notationService.chessToArrayNotation(square);
+
+      const tile = this.tiles()[x][y];
+
+      if (type === MoveType.MOVE) {
+        tile.isHint = true;
+        this.hintedTiles.push(tile);
+      } else if (type === MoveType.CAPTURE) {
+        tile.isCapture = true;
+        this.capturedTiles.push(tile);
+      }
     }
 
+    this.selectedTile = tile;
+  }
+
+  private capturePieceOnTile(tile: BoardTile) {
+    // player wants to capture piece on the square
+    // update the piece for the tile we are moving
+    const selectedTile = { ...this.selectedTile! }; // a tile is selected if there are hints on the board
+
+    const { x: oX, y: oY } = this.notationService.chessToArrayNotation(selectedTile.square);
+    const { x: nX, y: nY } = this.notationService.chessToArrayNotation(tile.square);
+
+    // remove piece from board
+    this.tiles()[oX][oY].piece = undefined;
+
+    // replace piece in correct spot
+    this.tiles()[nX][nY].piece = selectedTile.piece;
+
+    // update variables to keep state
+    this.tiles()[nX][nY].isHint = false;
+    this.hintedTiles = [];
+    this.capturedTiles = [];
+
+    // deselect the piece
+    this.clearHighlightedPiece();
+  }
+
+  private movePieceToTile(tile: BoardTile): void {
+    // player wants to move to this square
+    // update the piece for the tile we are moving
+    const selectedTile = { ...this.selectedTile! }; // a tile is selected if there are hints on the board
+
+    const { x: oX, y: oY } = this.notationService.chessToArrayNotation(selectedTile.square);
+    const { x: nX, y: nY } = this.notationService.chessToArrayNotation(tile.square);
+
+    // remove piece from board
+    this.tiles()[oX][oY].piece = undefined;
+
+    // replace piece in correct spot
+    this.tiles()[nX][nY].piece = selectedTile.piece;
+
+    // update variables to keep state
+    this.tiles()[nX][nY].isCapture = false;
+    this.hintedTiles = [];
+    this.capturedTiles = [];
+
+    // deselect the piece
+    this.clearHighlightedPiece();
+  }
+
+  private clearBoardFeatures() {
     for (const tile of this.hintedTiles) {
       tile.isHint = false;
     }
@@ -82,7 +141,10 @@ export class BoardComponent {
     for (const tile of this.capturedTiles) {
       tile.isCapture = false;
     }
+  }
 
-    this.selectedTiles = [];
+  private clearHighlightedPiece() {
+    this.selectedTile!.isSelected = false;
+    this.selectedTile = undefined;
   }
 }
