@@ -31,6 +31,13 @@ export class BoardComponent {
   ) {
     const initialBoard = this.boardService.constructBoard();
 
+    // this.tiles = signal(
+    //   this.boardService.rotateBoard({
+    //     tiles: initialBoard,
+    //     rotation: this.boardRotation,
+    //   }),
+    // );
+
     this.tiles = signal(initialBoard);
   }
 
@@ -42,13 +49,12 @@ export class BoardComponent {
 
       // calculate valid moves for selected piece
       const moves = this.movesService.calculateMovesForPiece(this.tiles(), tile);
-      console.log(moves, 'moves');
 
       // for now, highlight the valid moves
       for (const move of moves) {
         const { square, type } = move;
         const { x, y } = this.notationService.chessToArrayNotation(square);
-
+        console.log(x, y, square, 'for move');
         const tile = this.tiles()[x][y];
 
         if (type === MoveType.MOVE) {

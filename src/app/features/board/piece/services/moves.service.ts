@@ -31,13 +31,13 @@ export class MovesService {
 
   private calculatePawnMoves(piece: MovingPiece): IntermediaryMove[] {
     const { direction, square } = piece;
-    const { x, y } = this.notationService.chessToArrayNotation(square);
+    const { x } = this.notationService.chessToArrayNotation(square);
 
     // array for valid moves
     const moves: IntermediaryMove[] = [
       {
-        x: direction * 1,
-        y: 0,
+        x: 0,
+        y: direction * 1,
         type: MoveType.MOVE,
       }, // one step forward in correct direction for pawn
     ];
@@ -45,59 +45,51 @@ export class MovesService {
     // array for valid captures
     // is cleaned for only valid ones later
     const captures: IntermediaryMove[] = [
-      {
-        x: direction * 1,
-        y: direction * 1,
-        type: MoveType.CAPTURE,
-      }, // left capture
-      {
-        x: direction * 1,
-        y: direction * -1,
-        type: MoveType.CAPTURE,
-      }, // right capture
-
-      // en passant moves
-      {
-        x: direction * 2,
-        y: direction * -1,
-        type: MoveType.CAPTURE,
-      },
-      {
-        x: direction * 2,
-        y: direction * 1,
-        type: MoveType.CAPTURE,
-      },
+      // {
+      //   x: direction * 1,
+      //   y: direction * 1,
+      //   type: MoveType.CAPTURE,
+      // }, // left capture
+      // {
+      //   x: direction * 1,
+      //   y: direction * -1,
+      //   type: MoveType.CAPTURE,
+      // }, // right capture
+      // // en passant moves
+      // {
+      //   x: direction * 2,
+      //   y: direction * -1,
+      //   type: MoveType.CAPTURE,
+      // },
+      // {
+      //   x: direction * 2,
+      //   y: direction * 1,
+      //   type: MoveType.CAPTURE,
+      // },
     ];
 
     // check to see if we are doing our first move. if so, allow  two spaces forward
     // only allowed on starting squares
-    if (x === 1 || x === 6) {
-      const { x: pX, y: pY } = this.moveToAbsolute(square, moves[0]);
+    // if (x === 1 || x === 6) {
+    //   const { x: pX, y: pY } = this.localMoveToAbsoluteMove(square, moves[0]);
+    //   console.log(moves[0], pX, pY, this.notationService.arrayToChessNotation(pX, pY), 'intermediaty');
+    //   moves.push({
+    //     x: direction * 2,
+    //     y: 0,
+    //     type: MoveType.MOVE,
+    //     predecessor: this.notationService.arrayToChessNotation(pX, pY),
+    //   });
+    // }
 
-      moves.push({
-        x: direction * 2,
-        y: 0,
-        type: MoveType.MOVE,
-        predecessor: this.notationService.arrayToChessNotation(pX, pY),
-      });
-    }
-
-    const absoluteMoves = [...moves, ...captures].map((move) => {
-      const { x: mX, y: mY } = move;
-      return {
-        ...move,
-        x: x + mX,
-        y: y + mY,
-      };
-    });
-
-    console.log(absoluteMoves, 'yo');
+    const absoluteMoves = [...moves, ...captures].map((move) => this.localMoveToAbsoluteMove(square, move));
+    console.log(absoluteMoves, 'moves');
     return absoluteMoves;
   }
 
   private calculateValidMoves(board: BoardTile[][], moves: IntermediaryMove[], movingTile: BoardTile): Move[] {
     const validMoves: Move[] = [];
 
+    console.log(moves, 'moves here');
     for (const move of moves) {
       // we check the pieces on the tiles
       const { x, y, type, predecessor } = move;
@@ -106,23 +98,24 @@ export class MovesService {
 
       if (type === MoveType.MOVE) {
         // cannot move if a piece is present already
+        console.log(tile, 'tile');
         if (this.isTileMoveValid(tile)) {
           // move is valid!
           // but.. we need to check for starting move that can do 2
 
           if (predecessor) {
             // check the preceding move!
+            console.log(move, 'has predecessor!');
             const { x: pX, y: pY } = this.notationService.chessToArrayNotation(predecessor);
 
-            const tile = board[pY][pX];
-
+            const tile = board[pX][pY];
             // only push as long as preceding move is valid
             if (this.isTileMoveValid(tile)) {
-              validMoves.push(this.intermediaryToMove(move));
+              validMoves.push(this.intermediaryMoveToMove(move));
             }
           }
 
-          validMoves.push(this.intermediaryToMove(move));
+          validMoves.push(this.intermediaryMoveToMove(move));
 
           continue;
         }
@@ -134,7 +127,7 @@ export class MovesService {
         const color = tile.piece.color;
 
         if (color != movingTile.piece!.color) {
-          validMoves.push(this.intermediaryToMove(move));
+          validMoves.push(this.intermediaryMoveToMove(move));
         }
       }
     }
@@ -144,8 +137,9 @@ export class MovesService {
   }
 
   // convert a move to it's absolute move based on tile
-  private moveToAbsolute(square: ChessSquare, move: IntermediaryMove): IntermediaryMove {
+  private localMoveToAbsoluteMove(square: ChessSquare, move: IntermediaryMove): IntermediaryMove {
     const { x, y } = this.notationService.chessToArrayNotation(square);
+    console.log(x, y, square);
     const { x: mX, y: mY } = move;
 
     return {
@@ -161,7 +155,7 @@ export class MovesService {
   }
 
   // intermediary move to move
-  private intermediaryToMove(move: IntermediaryMove): Move {
+  private intermediaryMoveToMove(move: IntermediaryMove): Move {
     const { x, y, type } = move;
 
     return {
