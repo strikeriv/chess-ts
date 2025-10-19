@@ -2,7 +2,8 @@ import { Injectable } from '@angular/core';
 import { Board, BoardTile } from '../../interfaces/board.interface';
 import { PieceColor, PieceType } from '../../models/pieces/piece.model';
 import { NotationService } from '../../services/notation/notation.service';
-import { Move, MoveType, MovingPiece } from './interfaces/moves.interface';
+import { IntermediaryMove, Move, MoveType, MovingPiece } from './interfaces/moves.interface';
+import { ChessSquare } from '../../services/notation/models/notation.model';
 
 @Injectable()
 export class MovesService {
@@ -18,7 +19,7 @@ export class MovesService {
       square: tile.square,
     };
 
-    const moves: Move[] = [];
+    const moves: IntermediaryMove[] = [];
 
     if (type === PieceType.PAWN) {
       // calculate moves for a pawn!
@@ -28,61 +29,103 @@ export class MovesService {
     return this.calculateValidMoves(board, moves, tile);
   }
 
-  private calculatePawnMoves(piece: MovingPiece): Move[] {
+  private calculatePawnMoves(piece: MovingPiece): IntermediaryMove[] {
     const { direction, square } = piece;
     const { x, y } = this.notationService.chessToArrayNotation(square);
 
     // array for valid moves
-    const moves: number[][] = [
-      [direction * 1, 0, MoveType.MOVE], // one step forward in correct direction for pawn
+    const moves: IntermediaryMove[] = [
+      {
+        x: direction * 1,
+        y: 0,
+        type: MoveType.MOVE,
+      }, // one step forward in correct direction for pawn
     ];
 
     // array for valid captures
     // is cleaned for only valid ones later
-    const captures: number[][] = [
-      [direction * 1, direction * 1, MoveType.CAPTURE], // left capture
-      [direction * 1, direction * -1, MoveType.CAPTURE], // right capture
+    const captures: IntermediaryMove[] = [
+      {
+        x: direction * 1,
+        y: direction * 1,
+        type: MoveType.CAPTURE,
+      }, // left capture
+      {
+        x: direction * 1,
+        y: direction * -1,
+        type: MoveType.CAPTURE,
+      }, // right capture
+
       // en passant moves
-      [direction * 2, direction * -1, MoveType.CAPTURE], // left capture
-      [direction * 2, direction * 1, MoveType.CAPTURE], // right capture
+      {
+        x: direction * 2,
+        y: direction * -1,
+        type: MoveType.CAPTURE,
+      },
+      {
+        x: direction * 2,
+        y: direction * 1,
+        type: MoveType.CAPTURE,
+      },
     ];
 
     // check to see if we are doing our first move. if so, allow  two spaces forward
     // only allowed on starting squares
-    console.log(x, 'hmm');
     if (x === 1 || x === 6) {
-      moves.push([direction * 2, 0, MoveType.MOVE]);
+      const { x: pX, y: pY } = this.moveToAbsolute(square, moves[0]);
+
+      moves.push({
+        x: direction * 2,
+        y: 0,
+        type: MoveType.MOVE,
+        predecessor: this.notationService.arrayToChessNotation(pX, pY),
+      });
     }
 
     const absoluteMoves = [...moves, ...captures].map((move) => {
-      const [moveX, moveY] = move;
-      return [x + moveX, y + moveY, move[2]];
+      const { x: mX, y: mY } = move;
+      return {
+        ...move,
+        x: x + mX,
+        y: y + mY,
+      };
     });
 
-    return absoluteMoves.map((move) => ({
-      square: this.notationService.arrayToChessNotation(move[0], move[1]),
-      type: move[2],
-    }));
+    console.log(absoluteMoves, 'yo');
+    return absoluteMoves;
   }
 
-  private calculateValidMoves(board: BoardTile[][], moves: Move[], movingTile: BoardTile): Move[] {
+  private calculateValidMoves(board: BoardTile[][], moves: IntermediaryMove[], movingTile: BoardTile): Move[] {
     const validMoves: Move[] = [];
 
     for (const move of moves) {
       // we check the pieces on the tiles
-      const { square, type } = move;
-      const { x, y } = this.notationService.chessToArrayNotation(square);
+      const { x, y, type, predecessor } = move;
 
       const tile = board[x][y];
 
       if (type === MoveType.MOVE) {
         // cannot move if a piece is present already
-        if (!tile.piece) {
+        if (this.isTileMoveValid(tile)) {
           // move is valid!
-          validMoves.push(move);
-        }
+          // but.. we need to check for starting move that can do 2
 
-        continue;
+          if (predecessor) {
+            // check the preceding move!
+            const { x: pX, y: pY } = this.notationService.chessToArrayNotation(predecessor);
+
+            const tile = board[pY][pX];
+
+            // only push as long as preceding move is valid
+            if (this.isTileMoveValid(tile)) {
+              validMoves.push(this.intermediaryToMove(move));
+            }
+          }
+
+          validMoves.push(this.intermediaryToMove(move));
+
+          continue;
+        }
       }
 
       // move is a capture
@@ -91,12 +134,39 @@ export class MovesService {
         const color = tile.piece.color;
 
         if (color != movingTile.piece!.color) {
-          validMoves.push(move);
+          validMoves.push(this.intermediaryToMove(move));
         }
       }
     }
 
     console.log(validMoves, 'moves');
     return validMoves;
+  }
+
+  // convert a move to it's absolute move based on tile
+  private moveToAbsolute(square: ChessSquare, move: IntermediaryMove): IntermediaryMove {
+    const { x, y } = this.notationService.chessToArrayNotation(square);
+    const { x: mX, y: mY } = move;
+
+    return {
+      ...move,
+      x: x + mX,
+      y: y + mY,
+    };
+  }
+
+  // check to see if tile is occupied
+  private isTileMoveValid(tile: BoardTile): boolean {
+    return !tile.piece;
+  }
+
+  // intermediary move to move
+  private intermediaryToMove(move: IntermediaryMove): Move {
+    const { x, y, type } = move;
+
+    return {
+      square: this.notationService.arrayToChessNotation(x, y),
+      type,
+    };
   }
 }

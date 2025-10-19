@@ -5,6 +5,13 @@ export interface MovingPiece {
   square: ChessSquare; // square so we can keep track where it is
 }
 
+export interface IntermediaryMove {
+  x: number;
+  y: number;
+  type: MoveType;
+  predecessor?: ChessSquare; // used to make sure previous square is valid
+}
+
 export enum MoveType {
   MOVE,
   CAPTURE,
