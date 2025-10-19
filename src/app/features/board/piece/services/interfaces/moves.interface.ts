@@ -1,3 +1,4 @@
+import { ArrayNotation } from '../../../services/notation/interfaces/notation.interface';
 import { ChessSquare } from '../../../services/notation/models/notation.model';
 
 export interface MovingPiece {
@@ -6,9 +7,8 @@ export interface MovingPiece {
 }
 
 export interface IntermediaryMove {
-  x: number;
-  y: number;
   type: MoveType;
+  notation: ArrayNotation;
   predecessor?: ChessSquare; // used to make sure previous square is valid
 }
 

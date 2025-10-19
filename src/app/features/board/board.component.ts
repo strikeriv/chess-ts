@@ -39,41 +39,34 @@ export class BoardComponent {
     // );
 
     this.tiles = signal(initialBoard);
-
-    console.log(this.tiles()[7][0], this.tiles()[6][4], this.tiles()[3][3], this.tiles()[4][6], 'tiles');
-    console.log(this.notationService.chessToArrayNotation('A1'), this.notationService.arrayToChessNotation(7, 0), 'A1');
-    console.log(this.notationService.chessToArrayNotation('E2'), this.notationService.arrayToChessNotation(6, 4), 'E2');
-    console.log(this.notationService.chessToArrayNotation('D5'), this.notationService.arrayToChessNotation(3, 3), 'D5');
-    console.log(this.notationService.chessToArrayNotation('G4'), this.notationService.arrayToChessNotation(4, 6), 'G4');
   }
 
   onPieceSelected(tile: BoardTile) {
     this.clearBoard();
 
     if (tile.piece) {
-      //tile.isSelected = true;
+      tile.isSelected = true;
 
-      console.log(tile, 'tile');
       // // calculate valid moves for selected piece
       const moves = this.movesService.calculateMovesForPiece(this.tiles(), tile);
 
-      // // for now, highlight the valid moves
-      // for (const move of moves) {
-      //   const { square, type } = move;
-      //   const { x, y } = this.notationService.chessToArrayNotation(square);
-      //   console.log(x, y, square, 'for move');
-      //   const tile = this.tiles()[x][y];
+      // for now, highlight the valid moves
+      for (const move of moves) {
+        const { square, type } = move;
+        const { x, y } = this.notationService.chessToArrayNotation(square);
 
-      //   if (type === MoveType.MOVE) {
-      //     tile.isHint = true;
-      //     this.hintedTiles.push(tile);
-      //   } else if (type === MoveType.CAPTURE) {
-      //     tile.isCapture = true;
-      //     this.capturedTiles.push(tile);
-      //   }
-      // }
+        const tile = this.tiles()[x][y];
 
-      // this.selectedTiles.push(tile);
+        if (type === MoveType.MOVE) {
+          tile.isHint = true;
+          this.hintedTiles.push(tile);
+        } else if (type === MoveType.CAPTURE) {
+          tile.isCapture = true;
+          this.capturedTiles.push(tile);
+        }
+      }
+
+      this.selectedTiles.push(tile);
     }
   }
 

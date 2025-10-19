@@ -12,7 +12,9 @@ export class NotationService {
    * but chess notation starts on the bottom left, so [0][0] is in fact A8, so [7][0] is A1
    */
 
-  arrayToChessNotation(x: number, y: number): ChessSquare {
+  arrayToChessNotation(notation: ArrayNotation): ChessSquare {
+    const { x, y } = notation;
+
     const rank = CHESS_RANKS[7 - x]; // this swaps the positions around to make notation start from bottom left
     const file = CHESS_FILES[y];
 

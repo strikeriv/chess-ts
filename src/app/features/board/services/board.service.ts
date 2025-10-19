@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
-import { Board, BoardRotation, BoardTile, TileColor } from '../interfaces/board.interface';
-import { NotationService } from './notation/notation.service';
-import { ChessSquare } from './notation/models/notation.model';
+import { Board, BoardTile, TileColor } from '../interfaces/board.interface';
 import { BaseBoard } from '../models/board.model';
 import { Piece } from '../models/pieces/piece.model';
+import { ArrayNotation } from './notation/interfaces/notation.interface';
+import { ChessSquare } from './notation/models/notation.model';
+import { NotationService } from './notation/notation.service';
 
 @Injectable()
 export class BoardService {
@@ -38,12 +39,13 @@ export class BoardService {
 
   private generateBoardRow(x: number): BoardTile[] {
     return Array.from({ length: 8 }).map((_, y) => {
-      const square = this.calculateTileSquare(x, y);
+      const notation: ArrayNotation = { x, y };
+      const square = this.calculateTileSquare(notation);
 
       return {
         id: x + y,
         square,
-        color: this.calculateTileColor(x, y),
+        color: this.calculateTileColor(notation),
         piece: this.calculateTilePiece(square),
 
         isSelected: false,
@@ -53,13 +55,15 @@ export class BoardService {
     });
   }
 
-  private calculateTileColor(x: number, y: number): TileColor {
+  private calculateTileColor(notation: ArrayNotation): TileColor {
+    const { x, y } = notation;
+
     const isDark = (x + y) % 2 !== 0;
     return isDark ? TileColor.DARK : TileColor.LIGHT;
   }
 
-  private calculateTileSquare(x: number, y: number): ChessSquare {
-    return this.notationService.arrayToChessNotation(x, y);
+  private calculateTileSquare(notation: ArrayNotation): ChessSquare {
+    return this.notationService.arrayToChessNotation(notation);
   }
 
   private calculateTilePiece(square: ChessSquare): Piece | undefined {
