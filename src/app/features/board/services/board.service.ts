@@ -42,10 +42,13 @@ export class BoardService {
 
       return {
         id: x + y,
-        selected: false,
         square: this.calculateTileSquare(x, y),
         color: this.calculateTileColor(x, y),
         piece: this.calculateTilePiece(square),
+
+        isSelected: false,
+        isCapture: false,
+        isHint: false,
       };
     });
   }

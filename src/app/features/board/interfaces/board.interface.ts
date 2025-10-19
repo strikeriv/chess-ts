@@ -17,8 +17,12 @@ export type BoardTile = {
   id: number;
   square: ChessSquare;
   color: TileColor;
-  selected: boolean;
   piece?: Piece;
+
+  // modifiers
+  isSelected: boolean;
+  isHint: boolean;
+  isCapture: boolean;
 };
 
 export enum TileColor {
