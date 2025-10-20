@@ -21,6 +21,7 @@ export class PawnService {
           x: direction * 1,
           y: 0,
         },
+        type: MoveType.NORMAL,
       }, // one step forward in correct direction for pawn
     ];
 
@@ -29,9 +30,11 @@ export class PawnService {
     const captures: IntermediaryMove[] = [
       {
         notation: { x: direction * 1, y: direction * 1 },
+        type: MoveType.CAPTURE,
       }, // left capture
       {
         notation: { x: direction * 1, y: direction * -1 },
+        type: MoveType.CAPTURE,
       }, // right capture
 
       // en passant moves, way too complicated for right now
@@ -52,6 +55,7 @@ export class PawnService {
 
       moves.push({
         notation: { x: direction * 2, y: 0 },
+        type: MoveType.NORMAL,
         predecessor: this.notationService.arrayToChessNotation(localNotation.notation),
       });
     }

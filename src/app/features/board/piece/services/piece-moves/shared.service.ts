@@ -11,7 +11,7 @@ export class SharedService {
   // convert a move to it's absolute move based on tile
   // returns null when move is out of bounds (off the board)
   localMoveToAbsoluteMove(square: ChessSquare, move: IntermediaryMove): IntermediaryMove | null {
-    const { notation, predecessor } = move;
+    const { notation, predecessor, type } = move;
     const { x: mX, y: mY } = notation;
 
     const { x, y } = this.notationService.chessToArrayNotation(square);
@@ -24,6 +24,7 @@ export class SharedService {
       return {
         notation: absoluteNotation,
         predecessor,
+        type,
       };
     } else {
       return null;

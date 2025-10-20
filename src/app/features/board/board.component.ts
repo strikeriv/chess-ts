@@ -93,7 +93,7 @@ export class BoardComponent {
 
       const tile = this.tiles()[x][y];
 
-      if (type === MoveType.MOVE) {
+      if (type === MoveType.NORMAL) {
         tile.isHint = true;
         this.hintedTiles.push(tile);
       } else if (type === MoveType.CAPTURE) {

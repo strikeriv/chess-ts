@@ -8,12 +8,13 @@ export interface MovingPiece {
 
 export interface IntermediaryMove {
   notation: ArrayNotation;
+  type?: MoveType; // optional pre-defined move. mostly used for pawns
   predecessor?: ChessSquare; // used to make sure previous square is valid for the move
 }
 
 export enum MoveType {
-  MOVE,
-  CAPTURE,
+  NORMAL = 1,
+  CAPTURE = 2,
 }
 
 export type Move = {

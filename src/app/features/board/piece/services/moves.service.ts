@@ -41,44 +41,72 @@ export class MovesService {
 
     for (const move of moves) {
       // we check the pieces on the tiles
-      const { notation, predecessor } = move;
+      const { notation, type: predefinedType } = move;
       const { x, y } = notation;
 
+      // if the move is pre-defined, directly run the logic
+      if (predefinedType) {
+        if (predefinedType === MoveType.CAPTURE) {
+          if (this.isCaptureMoveValid(board, move, movingTile.piece!.color)) {
+            validMoves.push(this.intermediaryMoveToMove(move, MoveType.CAPTURE));
+          }
+        } else if (this.isNormalMoveValid(board, validMoves, move)) {
+          validMoves.push(this.intermediaryMoveToMove(move, MoveType.NORMAL));
+        }
+
+        continue;
+      }
+
+      // otherwise, figure out what move it is
       const tile = board[x][y];
 
+      // check if capture
       if (tile.piece) {
-        // move is a capture
-        const color = tile.piece.color;
-
-        if (color != movingTile.piece!.color) {
+        if (this.isCaptureMoveValid(board, move, movingTile.piece!.color)) {
           validMoves.push(this.intermediaryMoveToMove(move, MoveType.CAPTURE));
         }
-      } else {
-        // normal move
-        const mMove = this.intermediaryMoveToMove(move, MoveType.MOVE);
-
-        if (this.isTileMoveValid(tile)) {
-          // move is valid!
-          // but.. we need to check for starting move that can do 2
-
-          if (predecessor) {
-            // check the preceding move!
-            const { x: pX, y: pY } = this.notationService.chessToArrayNotation(predecessor);
-
-            const tile = board[pX][pY];
-
-            // only push as long as preceding move is valid
-            if (this.isTileMoveValid(tile)) {
-              validMoves.push(mMove);
-            }
-          } else {
-            validMoves.push(mMove);
-          }
-        }
+      } else if (this.isNormalMoveValid(board, validMoves, move)) {
+        validMoves.push(this.intermediaryMoveToMove(move, MoveType.NORMAL));
       }
     }
 
     return validMoves;
+  }
+
+  private isNormalMoveValid(board: BoardTile[][], validMoves: Move[], move: IntermediaryMove): boolean {
+    const { notation, predecessor } = move;
+    const { x, y } = notation;
+
+    const tile = board[x][y];
+
+    if (this.isTileMoveValid(tile)) {
+      // move is valid!
+      // but.. we need to check for starting move that can do 2
+
+      if (predecessor) {
+        // check the preceding move!
+        if (validMoves.some((move) => move.square === predecessor)) {
+          return true;
+        }
+      } else {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private isCaptureMoveValid(board: BoardTile[][], move: IntermediaryMove, color: PieceColor): boolean {
+    const { notation } = move;
+    const { x, y } = notation;
+
+    const tile = board[x][y];
+
+    if (tile.piece) {
+      return tile.piece.color != color;
+    }
+
+    return false;
   }
 
   // check to see if tile is occupied
