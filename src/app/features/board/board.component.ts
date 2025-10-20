@@ -11,12 +11,11 @@ import { SharedService } from './piece/services/piece-moves/shared.service';
 import { KnightService } from './piece/services/piece-moves/knight.service';
 
 @Component({
-  selector: 'app-board',
-  standalone: true,
-  imports: [CommonModule, PieceComponent],
-  providers: [BoardService, KnightService, NotationService, MovesService, PawnService, SharedService],
-  templateUrl: './board.component.html',
-  styleUrl: './board.component.scss',
+    selector: 'app-board',
+    imports: [CommonModule, PieceComponent],
+    providers: [BoardService, KnightService, NotationService, MovesService, PawnService, SharedService],
+    templateUrl: './board.component.html',
+    styleUrl: './board.component.scss'
 })
 export class BoardComponent {
   tiles: WritableSignal<BoardTile[][]>;
