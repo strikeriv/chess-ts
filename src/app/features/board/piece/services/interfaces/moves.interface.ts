@@ -7,9 +7,8 @@ export interface MovingPiece {
 }
 
 export interface IntermediaryMove {
-  type: MoveType;
   notation: ArrayNotation;
-  predecessor?: ChessSquare; // used to make sure previous square is valid
+  predecessor?: ChessSquare; // used to make sure previous square is valid for the move
 }
 
 export enum MoveType {

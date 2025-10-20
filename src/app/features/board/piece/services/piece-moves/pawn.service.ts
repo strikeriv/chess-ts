@@ -3,7 +3,6 @@ import { MovingPiece, IntermediaryMove, MoveType } from '../interfaces/moves.int
 import { NotationService } from '../../../services/notation/notation.service';
 import { SharedService } from './shared.service';
 
-
 @Injectable()
 export class PawnService {
   constructor(
@@ -22,7 +21,6 @@ export class PawnService {
           x: direction * 1,
           y: 0,
         },
-        type: MoveType.MOVE,
       }, // one step forward in correct direction for pawn
     ];
 
@@ -31,11 +29,9 @@ export class PawnService {
     const captures: IntermediaryMove[] = [
       {
         notation: { x: direction * 1, y: direction * 1 },
-        type: MoveType.CAPTURE,
       }, // left capture
       {
         notation: { x: direction * 1, y: direction * -1 },
-        type: MoveType.CAPTURE,
       }, // right capture
 
       // en passant moves, way too complicated for right now
@@ -56,7 +52,6 @@ export class PawnService {
 
       moves.push({
         notation: { x: direction * 2, y: 0 },
-        type: MoveType.MOVE,
         predecessor: this.notationService.arrayToChessNotation(localNotation.notation),
       });
     }

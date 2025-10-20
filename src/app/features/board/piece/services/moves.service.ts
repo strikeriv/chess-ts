@@ -41,13 +41,22 @@ export class MovesService {
 
     for (const move of moves) {
       // we check the pieces on the tiles
-      const { notation, type, predecessor } = move;
+      const { notation, predecessor } = move;
       const { x, y } = notation;
 
       const tile = board[x][y];
 
-      if (type === MoveType.MOVE) {
-        // cannot move if a piece is present already
+      if (tile.piece) {
+        // move is a capture
+        const color = tile.piece.color;
+
+        if (color != movingTile.piece!.color) {
+          validMoves.push(this.intermediaryMoveToMove(move, MoveType.CAPTURE));
+        }
+      } else {
+        // normal move
+        const mMove = this.intermediaryMoveToMove(move, MoveType.MOVE);
+
         if (this.isTileMoveValid(tile)) {
           // move is valid!
           // but.. we need to check for starting move that can do 2
@@ -60,23 +69,11 @@ export class MovesService {
 
             // only push as long as preceding move is valid
             if (this.isTileMoveValid(tile)) {
-              validMoves.push(this.intermediaryMoveToMove(move));
+              validMoves.push(mMove);
             }
           } else {
-            validMoves.push(this.intermediaryMoveToMove(move));
+            validMoves.push(mMove);
           }
-        }
-
-        continue;
-      }
-
-      // move is a capture
-      // can only capture if piece is opposite color, and when a piece exists
-      if (tile.piece) {
-        const color = tile.piece.color;
-
-        if (color != movingTile.piece!.color) {
-          validMoves.push(this.intermediaryMoveToMove(move));
         }
       }
     }
@@ -90,8 +87,8 @@ export class MovesService {
   }
 
   // intermediary move to move
-  private intermediaryMoveToMove(move: IntermediaryMove): Move {
-    const { notation, type } = move;
+  private intermediaryMoveToMove(move: IntermediaryMove, type: MoveType): Move {
+    const { notation } = move;
 
     return {
       square: this.notationService.arrayToChessNotation(notation),

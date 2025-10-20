@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { IntermediaryMove, MoveType, MovingPiece } from '../interfaces/moves.interface';
+import { IntermediaryMove, MovingPiece } from '../interfaces/moves.interface';
 import { SharedService } from './shared.service';
 
 @Injectable()
@@ -17,28 +17,24 @@ export class KnightService {
           x: direction * 2,
           y: direction * 1,
         },
-        type: MoveType.MOVE,
       }, // far forward left
       {
         notation: {
           x: direction * 2,
           y: direction * -1,
         },
-        type: MoveType.MOVE,
       }, // far forward right
       {
         notation: {
           x: direction * 1,
           y: direction * 2,
         },
-        type: MoveType.MOVE,
       }, // close forward left
       {
         notation: {
           x: direction * 1,
           y: direction * -2,
         },
-        type: MoveType.MOVE,
       }, // close forward right
 
       // backward moves
@@ -47,28 +43,24 @@ export class KnightService {
           x: direction * -1,
           y: direction * 2,
         },
-        type: MoveType.MOVE,
       }, // close backward left
       {
         notation: {
           x: direction * -1,
           y: direction * -2,
         },
-        type: MoveType.MOVE,
       }, // close backward right
       {
         notation: {
           x: direction * -2,
           y: direction * 1,
         },
-        type: MoveType.MOVE,
       }, // far backward left
       {
         notation: {
           x: direction * -2,
           y: direction * -1,
         },
-        type: MoveType.MOVE,
       }, // far backward right
     ];
 
