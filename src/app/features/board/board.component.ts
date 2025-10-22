@@ -9,13 +9,14 @@ import { MoveType } from './piece/services/interfaces/moves.interface';
 import { PawnService } from './piece/services/piece-moves/pawn.service';
 import { SharedService } from './piece/services/piece-moves/shared.service';
 import { KnightService } from './piece/services/piece-moves/knight.service';
+import { RookService } from './piece/services/piece-moves/rook.service';
 
 @Component({
-    selector: 'app-board',
-    imports: [CommonModule, PieceComponent],
-    providers: [BoardService, KnightService, NotationService, MovesService, PawnService, SharedService],
-    templateUrl: './board.component.html',
-    styleUrl: './board.component.scss'
+  selector: 'app-board',
+  imports: [CommonModule, PieceComponent],
+  providers: [BoardService, KnightService, NotationService, MovesService, PawnService, RookService, SharedService],
+  templateUrl: './board.component.html',
+  styleUrl: './board.component.scss',
 })
 export class BoardComponent {
   tiles: WritableSignal<BoardTile[][]>;

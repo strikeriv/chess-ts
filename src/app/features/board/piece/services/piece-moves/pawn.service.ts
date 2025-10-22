@@ -7,7 +7,7 @@ import { SharedService } from './shared.service';
 export class PawnService {
   constructor(
     private readonly notationService: NotationService,
-    private readonly sharedServive: SharedService,
+    private readonly sharedService: SharedService,
   ) {}
 
   calculateMoves(piece: MovingPiece): IntermediaryMove[] {
@@ -51,7 +51,7 @@ export class PawnService {
     // check to see if we are doing our first move. if so, allow  two spaces forward
     // only allowed on starting squares
     if (x === 1 || x === 6) {
-      const localNotation = this.sharedServive.localMoveToAbsoluteMove(square, moves[0])!; // will always be valid
+      const localNotation = this.sharedService.localMoveToAbsoluteMove(square, moves[0])!; // will always be valid
 
       moves.push({
         notation: { x: direction * 2, y: 0 },
@@ -60,7 +60,7 @@ export class PawnService {
       });
     }
 
-    const absoluteMoves = [...moves, ...captures].map((move) => this.sharedServive.localMoveToAbsoluteMove(square, move)).filter((move): move is IntermediaryMove => move !== null);
+    const absoluteMoves = [...moves, ...captures].map((move) => this.sharedService.localMoveToAbsoluteMove(square, move)).filter((move): move is IntermediaryMove => move !== null);
 
     return absoluteMoves;
   }

@@ -20,8 +20,7 @@ export const BaseBoard: Partial<Record<ChessSquare, Piece>> = {
   G2: WhitePawn,
   H2: WhitePawn,
 
-  // D5: BlackKnight,
-  // E7: WhiteKnight,
+  E4: WhiteRook,
 
   // black
   A8: BlackRook,

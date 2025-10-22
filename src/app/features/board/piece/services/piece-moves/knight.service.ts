@@ -4,7 +4,7 @@ import { SharedService } from './shared.service';
 
 @Injectable()
 export class KnightService {
-  constructor(private readonly sharedServive: SharedService) {}
+  constructor(private readonly sharedService: SharedService) {}
 
   calculateMoves(piece: MovingPiece): IntermediaryMove[] {
     const { direction, square } = piece;
@@ -64,7 +64,7 @@ export class KnightService {
       }, // far backward right
     ];
 
-    const absoluteMoves = moves.map((move) => this.sharedServive.localMoveToAbsoluteMove(square, move)).filter((move): move is IntermediaryMove => move !== null);
+    const absoluteMoves = moves.map((move) => this.sharedService.localMoveToAbsoluteMove(square, move)).filter((move): move is IntermediaryMove => move !== null);
 
     return absoluteMoves;
   }
