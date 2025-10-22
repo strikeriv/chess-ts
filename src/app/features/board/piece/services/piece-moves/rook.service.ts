@@ -1,8 +1,16 @@
 import { Injectable } from '@angular/core';
 import { NotationService } from '../../../services/notation/notation.service';
-import { IntermediaryMove, MovingPiece } from '../interfaces/moves.interface';
+import { Direction, IntermediaryMove, MovingPiece } from '../interfaces/moves.interface';
 import { SharedService } from './shared.service';
 import { ChessSquare } from '../../../services/notation/models/notation.model';
+import { ArrayNotation } from '../../../services/notation/interfaces/notation.interface';
+
+const ROOK_DIRECTIONS: Direction[] = [
+  { dx: -1, dy: 0 }, // up (decrease row index)
+  { dx: 1, dy: 0 }, // down (increase row index)
+  { dx: 0, dy: 1 }, // right (increase column index)
+  { dx: 0, dy: -1 }, // left (decrease column index)
+];
 
 @Injectable()
 export class RookService {
@@ -13,78 +21,49 @@ export class RookService {
 
   calculateMoves(piece: MovingPiece): IntermediaryMove[] {
     const { square } = piece;
+    const startNotation = this.notationService.chessToArrayNotation(square);
 
     // array for valid moves
     const moves: IntermediaryMove[] = [];
 
     // we use for loops, as predecessor move requires previous move to be valid
-    // start with forward moves
-    for (let a = 1; a <= 4; a++) {
-      const tempMoves: IntermediaryMove[] = [];
-
-      // calculate vars
-
-      // by default, calculate upwards
-      let x = -1;
-      let y = 0;
-
-      if (a === 2) {
-        // rightwards
-        x = 0;
-        y = 1;
-      } else if (a === 3) {
-        // leftwards
-        x = 0;
-        y = -1;
-      } else if (a === 4) {
-        // downwards
-        x = 1;
+    for (const dir of ROOK_DIRECTIONS) {
+      for (const move of this.traverseDirection(startNotation, dir, square)) {
+        moves.push(move);
       }
-
-      console.log(x, y, 'after calc');
-      for (let z = 1; z <= 8; z++) {
-        // swap x direction if needed
-
-        const predecessor = tempMoves.at(-1);
-        const move = this.generateMoveForDirection(x, y, z, square, predecessor);
-
-        if (move) {
-          tempMoves.push(move);
-        }
-      }
-
-      moves.push(...tempMoves);
     }
 
-    const absoluteMoves = moves.map((move) => this.sharedService.localMoveToAbsoluteMove(square, move)).filter((move): move is IntermediaryMove => move !== null);
+    const absoluteMoves = moves.filter((move): move is IntermediaryMove => move !== null);
 
     return absoluteMoves;
   }
 
-  private generateMoveForDirection(xDirection: number, yDirection: number, z: number, square: ChessSquare, predecessor?: IntermediaryMove): IntermediaryMove | undefined {
-    if (!predecessor) {
-      return {
-        notation: {
-          x: xDirection * z,
-          y: yDirection * z,
-        },
-      };
-    }
+  private traverseDirection(start: ArrayNotation, dir: Direction, square: ChessSquare): IntermediaryMove[] {
+    const moves: IntermediaryMove[] = [];
 
-    // check the predecessor
-    const absolutePredecessor = this.sharedService.localMoveToAbsoluteMove(square, predecessor);
-    if (absolutePredecessor) {
-      if (this.sharedService.isArrayNotationValid(absolutePredecessor.notation)) {
-        return {
-          notation: {
-            x: xDirection * z,
-            y: yDirection * z,
-          },
-          predecessor: this.notationService.arrayToChessNotation(absolutePredecessor.notation),
-        };
+    // iterate through all possible steps in the given direction
+    for (let step = 1; step <= 7; step++) {
+      const targetX = start.x + dir.dx * step;
+      const targetY = start.y + dir.dy * step;
+
+      const targetNotation: ArrayNotation = { x: targetX, y: targetY };
+
+      // check if we are still on the board
+      if (!this.sharedService.isArrayNotationValid(targetNotation)) {
+        break; // oob
+      }
+
+      const predecessor = moves.at(-1);
+      if (predecessor) {
+        moves.push({
+          notation: targetNotation,
+          predecessor: this.notationService.arrayToChessNotation(predecessor.notation),
+        });
+      } else {
+        moves.push({ notation: targetNotation });
       }
     }
 
-    return;
+    return moves;
   }
 }

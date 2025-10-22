@@ -12,6 +12,11 @@ export interface IntermediaryMove {
   predecessor?: ChessSquare; // used to make sure previous square is valid for the move
 }
 
+export interface Direction {
+  dx: number; // change in x (row)
+  dy: number; // change in y (column)
+}
+
 export enum MoveType {
   NORMAL = 1,
   CAPTURE = 2,
