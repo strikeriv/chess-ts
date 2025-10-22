@@ -1,25 +1,26 @@
 import { CommonModule } from '@angular/common';
-import { Component, signal, WritableSignal } from '@angular/core';
+import { Component } from '@angular/core';
 import { BoardRotation, BoardTile } from './interfaces/board.interface';
 import { PieceComponent } from './piece/piece.component';
+import { MoveType } from './piece/services/interfaces/moves.interface';
+import { MovesService } from './piece/services/moves.service';
+import { KnightService } from './piece/services/piece-moves/knight.service';
+import { PawnService } from './piece/services/piece-moves/pawn.service';
+import { RookService } from './piece/services/piece-moves/rook.service';
+import { SharedService } from './piece/services/piece-moves/shared.service';
 import { BoardService } from './services/board.service';
 import { NotationService } from './services/notation/notation.service';
-import { MovesService } from './piece/services/moves.service';
-import { MoveType } from './piece/services/interfaces/moves.interface';
-import { PawnService } from './piece/services/piece-moves/pawn.service';
-import { SharedService } from './piece/services/piece-moves/shared.service';
-import { KnightService } from './piece/services/piece-moves/knight.service';
-import { RookService } from './piece/services/piece-moves/rook.service';
+import { BoardStore } from './store/board.store';
 
 @Component({
   selector: 'app-board',
   imports: [CommonModule, PieceComponent],
-  providers: [BoardService, KnightService, NotationService, MovesService, PawnService, RookService, SharedService],
+  providers: [BoardService, BoardStore, KnightService, NotationService, MovesService, PawnService, RookService, SharedService],
   templateUrl: './board.component.html',
   styleUrl: './board.component.scss',
 })
 export class BoardComponent {
-  tiles: WritableSignal<BoardTile[][]>;
+  readonly tiles$ = this.boardStore.tiles$;
 
   capturedTiles: BoardTile[] = [];
   hintedTiles: BoardTile[] = [];
@@ -31,19 +32,8 @@ export class BoardComponent {
   constructor(
     private readonly notationService: NotationService,
     private readonly movesService: MovesService,
-    private readonly boardService: BoardService,
-  ) {
-    const initialBoard = this.boardService.constructBoard();
-
-    // this.tiles = signal(
-    //   this.boardService.rotateBoard({
-    //     tiles: initialBoard,
-    //     rotation: this.boardRotation,
-    //   }),
-    // );
-
-    this.tiles = signal(initialBoard);
-  }
+    private readonly boardStore: BoardStore,
+  ) {}
 
   onTileSelected(tile: BoardTile) {
     this.clearBoardFeatures();
@@ -84,14 +74,14 @@ export class BoardComponent {
     this.hintedTiles = [];
     this.capturedTiles = [];
 
-    const moves = this.movesService.calculateMovesForPiece(this.tiles(), tile);
+    const moves = this.movesService.calculateMovesForPiece(tile);
 
     // for now, highlight the valid moves
     for (const move of moves) {
       const { square, type } = move;
       const { x, y } = this.notationService.chessToArrayNotation(square);
 
-      const tile = this.tiles()[x][y];
+      const tile = this.boardStore.getTiles()[x][y];
 
       if (type === MoveType.NORMAL) {
         tile.isHint = true;
@@ -114,13 +104,13 @@ export class BoardComponent {
     const { x: nX, y: nY } = this.notationService.chessToArrayNotation(tile.square);
 
     // remove piece from board
-    this.tiles()[oX][oY].piece = undefined;
+    this.boardStore.getTiles()[oX][oY].piece = undefined;
 
     // replace piece in correct spot
-    this.tiles()[nX][nY].piece = selectedTile.piece;
+    this.boardStore.getTiles()[nX][nY].piece = selectedTile.piece;
 
     // update variables to keep state
-    this.tiles()[nX][nY].isHint = false;
+    this.boardStore.getTiles()[nX][nY].isHint = false;
     this.hintedTiles = [];
     this.capturedTiles = [];
 
@@ -137,13 +127,13 @@ export class BoardComponent {
     const { x: nX, y: nY } = this.notationService.chessToArrayNotation(tile.square);
 
     // remove piece from board
-    this.tiles()[oX][oY].piece = undefined;
+    this.boardStore.getTiles()[oX][oY].piece = undefined;
 
     // replace piece in correct spot
-    this.tiles()[nX][nY].piece = selectedTile.piece;
+    this.boardStore.getTiles()[nX][nY].piece = selectedTile.piece;
 
     // update variables to keep state
-    this.tiles()[nX][nY].isCapture = false;
+    this.boardStore.getTiles()[nX][nY].isCapture = false;
     this.hintedTiles = [];
     this.capturedTiles = [];
 

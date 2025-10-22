@@ -1,23 +1,33 @@
 import { Injectable } from '@angular/core';
-import { Board, BoardTile } from '../../interfaces/board.interface';
+import { BoardTile } from '../../interfaces/board.interface';
 import { PieceColor, PieceType } from '../../models/pieces/piece.model';
 import { NotationService } from '../../services/notation/notation.service';
+import { BoardStore } from '../../store/board.store';
 import { IntermediaryMove, Move, MoveType, MovingPiece } from './interfaces/moves.interface';
-import { PawnService } from './piece-moves/pawn.service';
 import { KnightService } from './piece-moves/knight.service';
+import { PawnService } from './piece-moves/pawn.service';
 import { RookService } from './piece-moves/rook.service';
 
 @Injectable()
 export class MovesService {
+  board: BoardTile[][];
+  validMoves: Move[] = [];
+
   constructor(
     private readonly notationService: NotationService,
+    private readonly boardStore: BoardStore,
 
     private readonly knightService: KnightService,
     private readonly rookService: RookService,
     private readonly pawnService: PawnService,
-  ) {}
+  ) {
+    this.board = this.boardStore.getTiles();
+  }
 
-  calculateMovesForPiece(board: BoardTile[][], tile: BoardTile): Move[] {
+  calculateMovesForPiece(tile: BoardTile): Move[] {
+    // clear moves
+    this.validMoves = [];
+
     const piece = tile.piece!;
 
     const { color, type } = piece;
@@ -37,70 +47,57 @@ export class MovesService {
       moves.push(...this.rookService.calculateMoves(movingPiece));
     }
 
-    return this.calculateValidMoves(board, moves, tile);
+    return this.calculateValidMoves(moves, tile);
   }
 
-  private calculateValidMoves(board: BoardTile[][], moves: IntermediaryMove[], movingTile: BoardTile): Move[] {
-    const validMoves: Move[] = [];
-
+  private calculateValidMoves(moves: IntermediaryMove[], movingTile: BoardTile): Move[] {
     for (const move of moves) {
       // we check the pieces on the tiles
-      const validMove = this.isMoveValid(board, validMoves, move, movingTile);
+      const validMove = this.isMoveValid(move, movingTile);
       if (validMove) {
-        validMoves.push(validMove);
+        this.validMoves.push(validMove);
       }
     }
 
-    return validMoves;
+    return this.validMoves;
   }
 
-  private isMoveValid(board: BoardTile[][], validMoves: Move[], move: IntermediaryMove, movingTile: BoardTile): Move | undefined {
-    const { notation, type: predefinedType, predecessor } = move;
-    const { x, y } = notation;
+  private isMoveValid(move: IntermediaryMove, movingTile: BoardTile): Move | undefined {
+    const { predecessor } = move;
 
-    // if there is a predecessor, check for that and make sure it's valid
+    // if there is a predecessor, start by checking that for validity
     if (predecessor) {
-      if (!validMoves.some((move) => move.square === predecessor)) {
-        console.log(move, 'move is not valid since predecessor is invalid');
-        return; // pass, since the predecessor is not valid
+      const validPredecessor = this.validMoves.find((move) => move.square === predecessor);
+      if (!validPredecessor) {
+        return;
+      }
+
+      // check the move type of the predecessor
+      if (validPredecessor.type === MoveType.CAPTURE) {
+        return; // cannot do two captures in a row
       }
     }
 
     // if the move is pre-defined, directly run the logic
-    if (predefinedType) {
-      if (predefinedType === MoveType.CAPTURE) {
-        if (this.isCaptureMoveValid(board, validMoves, move, movingTile)) {
-          return this.intermediaryMoveToMove(move, MoveType.CAPTURE);
-        }
-      } else if (this.isNormalMoveValid(board, validMoves, move)) {
-        return this.intermediaryMoveToMove(move, MoveType.NORMAL);
+    const moveType = this.determineMoveType(move);
+    if (moveType === MoveType.CAPTURE) {
+      if (this.isCaptureMoveValid(move, movingTile)) {
+        return this.intermediaryMoveToMove(move, MoveType.CAPTURE);
+      } else {
+        return;
       }
-
+    } else if (this.isNormalMoveValid(move)) {
+      return this.intermediaryMoveToMove(move, MoveType.NORMAL);
+    } else {
       return;
     }
-
-    // otherwise, figure out what move it is
-    const tile = board[x][y];
-
-    // check if capture
-    if (tile.piece) {
-      console.log(tile.square, 'tile for current move');
-      console.log(move, movingTile.piece!.color, 'move and color');
-      if (this.isCaptureMoveValid(board, validMoves, move, movingTile)) {
-        return this.intermediaryMoveToMove(move, MoveType.CAPTURE);
-      }
-    } else if (this.isNormalMoveValid(board, validMoves, move)) {
-      return this.intermediaryMoveToMove(move, MoveType.NORMAL);
-    }
-
-    return;
   }
 
-  private isNormalMoveValid(board: BoardTile[][], validMoves: Move[], move: IntermediaryMove): boolean {
+  private isNormalMoveValid(move: IntermediaryMove): boolean {
     const { notation, predecessor } = move;
     const { x, y } = notation;
 
-    const tile = board[x][y];
+    const tile = this.board[x][y];
 
     if (this.isTileMoveValid(tile)) {
       // move is valid!
@@ -108,7 +105,7 @@ export class MovesService {
 
       if (predecessor) {
         // check the preceding move!
-        if (validMoves.some((move) => move.square === predecessor)) {
+        if (this.validMoves.some((move) => move.square === predecessor)) {
           return true;
         }
       } else {
@@ -119,18 +116,21 @@ export class MovesService {
     return false;
   }
 
-  private isCaptureMoveValid(board: BoardTile[][], validMoves: Move[], move: IntermediaryMove, movingTile: BoardTile): boolean {
+  private isCaptureMoveValid(move: IntermediaryMove, movingTile: BoardTile): boolean {
     const { notation, predecessor } = move;
     const { x, y } = notation;
 
-    const tile = board[x][y];
+    const tile = this.board[x][y];
 
     // check the predecessor
     // if the prev. move is a capture, and valid, you can't capture multiple in a row
-    console.log(tile.square, 'square capture move');
     if (predecessor) {
       // check if predecessor is valid move
-      const predecessorValid = this.isMoveValid(board, validMoves, move, movingTile);
+      const predecessorMove: IntermediaryMove = {
+        notation: this.notationService.chessToArrayNotation(predecessor),
+      };
+
+      const predecessorValid = this.isMoveValid(predecessorMove, movingTile);
       if (!predecessorValid) {
         return false;
       }
@@ -141,6 +141,23 @@ export class MovesService {
     }
 
     return false;
+  }
+
+  // determines the move type
+  private determineMoveType(move: IntermediaryMove): MoveType {
+    // some moves are statically set (pawn captures), so just return their type
+    const { x, y } = move.notation;
+
+    if (move.type) {
+      return move.type;
+    }
+
+    const tile = this.board[x][y];
+    if (tile.piece) {
+      return MoveType.CAPTURE;
+    } else {
+      return MoveType.NORMAL;
+    }
   }
 
   // check to see if tile is occupied
