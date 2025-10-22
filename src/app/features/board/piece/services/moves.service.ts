@@ -8,6 +8,7 @@ import { KnightService } from './piece-moves/knight.service';
 import { PawnService } from './piece-moves/pawn.service';
 import { RookService } from './piece-moves/rook.service';
 import { BishopService } from './piece-moves/bishop.service';
+import { QueenService } from './piece-moves/queen.service';
 
 @Injectable()
 export class MovesService {
@@ -20,6 +21,7 @@ export class MovesService {
 
     private readonly knightService: KnightService,
     private readonly bishopService: BishopService,
+    private readonly queenService: QueenService,
     private readonly rookService: RookService,
     private readonly pawnService: PawnService,
   ) {
@@ -49,6 +51,9 @@ export class MovesService {
       moves.push(...this.bishopService.calculateMoves(movingPiece));
     } else if (type === PieceType.ROOK) {
       moves.push(...this.rookService.calculateMoves(movingPiece));
+    } else if (type === PieceType.QUEEN) {
+      // queen combines rook and bishop moves
+      moves.push(...this.queenService.calculateMoves(movingPiece));
     }
 
     return this.calculateValidMoves(moves, tile);

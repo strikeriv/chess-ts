@@ -4,19 +4,20 @@ import { BoardRotation, BoardTile } from './interfaces/board.interface';
 import { PieceComponent } from './piece/piece.component';
 import { MoveType } from './piece/services/interfaces/moves.interface';
 import { MovesService } from './piece/services/moves.service';
+import { BishopService } from './piece/services/piece-moves/bishop.service';
 import { KnightService } from './piece/services/piece-moves/knight.service';
 import { PawnService } from './piece/services/piece-moves/pawn.service';
+import { QueenService } from './piece/services/piece-moves/queen.service';
 import { RookService } from './piece/services/piece-moves/rook.service';
 import { SharedService } from './piece/services/piece-moves/shared.service';
 import { BoardService } from './services/board.service';
 import { NotationService } from './services/notation/notation.service';
 import { BoardStore } from './store/board.store';
-import { BishopService } from './piece/services/piece-moves/bishop.service';
 
 @Component({
   selector: 'app-board',
   imports: [CommonModule, PieceComponent],
-  providers: [BishopService, BoardService, BoardStore, KnightService, NotationService, MovesService, PawnService, RookService, SharedService],
+  providers: [BishopService, BoardService, BoardStore, KnightService, NotationService, MovesService, PawnService, QueenService, RookService, SharedService],
   templateUrl: './board.component.html',
   styleUrl: './board.component.scss',
 })
