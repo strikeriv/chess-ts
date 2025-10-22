@@ -1,70 +1,35 @@
 import { Injectable } from '@angular/core';
-import { IntermediaryMove, MovingPiece } from '../interfaces/moves.interface';
+import { Direction, IntermediaryMove, MovingPiece } from '../interfaces/moves.interface';
 import { SharedService } from './shared.service';
+
+const KNIGHT_OFFSETS: Direction[] = [
+  { dx: 2, dy: 1 },
+  { dx: 2, dy: -1 },
+  { dx: -2, dy: 1 },
+  { dx: -2, dy: -1 },
+
+  { dx: 1, dy: 2 },
+  { dx: 1, dy: -2 },
+  { dx: -1, dy: 2 },
+  { dx: -1, dy: -2 },
+];
 
 @Injectable()
 export class KnightService {
   constructor(private readonly sharedService: SharedService) {}
 
   calculateMoves(piece: MovingPiece): IntermediaryMove[] {
-    const { direction, square } = piece;
+    const { square } = piece;
 
-    // array for valid moves
-    const moves: IntermediaryMove[] = [
-      // forward moves
-      {
-        notation: {
-          x: direction * 2,
-          y: direction * 1,
-        },
-      }, // far forward left
-      {
-        notation: {
-          x: direction * 2,
-          y: direction * -1,
-        },
-      }, // far forward right
-      {
-        notation: {
-          x: direction * 1,
-          y: direction * 2,
-        },
-      }, // close forward left
-      {
-        notation: {
-          x: direction * 1,
-          y: direction * -2,
-        },
-      }, // close forward right
+    // generate knight moves based on offsets
+    const potentialMoves: IntermediaryMove[] = KNIGHT_OFFSETS.map((offset) => ({
+      notation: {
+        x: offset.dx,
+        y: offset.dy,
+      },
+    }));
 
-      // backward moves
-      {
-        notation: {
-          x: direction * -1,
-          y: direction * 2,
-        },
-      }, // close backward left
-      {
-        notation: {
-          x: direction * -1,
-          y: direction * -2,
-        },
-      }, // close backward right
-      {
-        notation: {
-          x: direction * -2,
-          y: direction * 1,
-        },
-      }, // far backward left
-      {
-        notation: {
-          x: direction * -2,
-          y: direction * -1,
-        },
-      }, // far backward right
-    ];
-
-    const absoluteMoves = moves.map((move) => this.sharedService.localMoveToAbsoluteMove(square, move)).filter((move): move is IntermediaryMove => move !== null);
+    const absoluteMoves: IntermediaryMove[] = potentialMoves.map((localMove) => this.sharedService.localMoveToAbsoluteMove(square, localMove)).filter((move): move is IntermediaryMove => move !== null);
 
     return absoluteMoves;
   }

@@ -3,6 +3,11 @@ import { MovingPiece, IntermediaryMove, MoveType } from '../interfaces/moves.int
 import { NotationService } from '../../../services/notation/notation.service';
 import { SharedService } from './shared.service';
 
+const PAWN_FORWARD_MOVE = { dx: 1, dy: 0, type: MoveType.NORMAL };
+const PAWN_CAPTURE_LEFT = { dx: 1, dy: 1, type: MoveType.CAPTURE };
+const PAWN_CAPTURE_RIGHT = { dx: 1, dy: -1, type: MoveType.CAPTURE };
+const PAWN_DOUBLE_STEP = { dx: 2, dy: 0, type: MoveType.NORMAL };
+
 @Injectable()
 export class PawnService {
   constructor(
@@ -12,55 +17,55 @@ export class PawnService {
 
   calculateMoves(piece: MovingPiece): IntermediaryMove[] {
     const { direction, square } = piece;
-    const { x } = this.notationService.chessToArrayNotation(square);
 
-    // array for valid moves
-    const moves: IntermediaryMove[] = [
-      {
-        notation: {
-          x: direction * 1,
-          y: 0,
-        },
-        type: MoveType.NORMAL,
-      }, // one step forward in correct direction for pawn
-    ];
+    const startNotation = this.notationService.chessToArrayNotation(square);
+    const isStartingRank = (direction === 1 && startNotation.x === 1) || (direction === -1 && startNotation.x === 6);
 
-    // array for valid captures
-    // is cleaned for only valid ones later
-    const captures: IntermediaryMove[] = [
-      {
-        notation: { x: direction * 1, y: direction * 1 },
-        type: MoveType.CAPTURE,
-      }, // left capture
-      {
-        notation: { x: direction * 1, y: direction * -1 },
-        type: MoveType.CAPTURE,
-      }, // right capture
+    const potentialMoves: IntermediaryMove[] = [];
 
-      // en passant moves, way too complicated for right now
-      // {
-      //   notation: { x: direction * 2, y: direction * -1 },
-      //   type: MoveType.CAPTURE,
-      // },
-      // {
-      //   notation: { x: direction * 2, y: direction * 1 },
-      //   type: MoveType.CAPTURE,
-      // },
-    ];
+    const oneStepMove: IntermediaryMove = {
+      notation: {
+        x: PAWN_FORWARD_MOVE.dx * direction,
+        y: PAWN_FORWARD_MOVE.dy * direction,
+      },
+      type: PAWN_FORWARD_MOVE.type,
+    };
+    potentialMoves.push(oneStepMove);
 
-    // check to see if we are doing our first move. if so, allow  two spaces forward
-    // only allowed on starting squares
-    if (x === 1 || x === 6) {
-      const localNotation = this.sharedService.localMoveToAbsoluteMove(square, moves[0])!; // will always be valid
+    // check for two-step move from starting rank
+    if (isStartingRank) {
+      const absoluteOneStep = this.sharedService.localMoveToAbsoluteMove(square, oneStepMove);
 
-      moves.push({
-        notation: { x: direction * 2, y: 0 },
-        type: MoveType.NORMAL,
-        predecessor: this.notationService.arrayToChessNotation(localNotation.notation),
-      });
+      // as long as one step is valid, we can consider two-step
+      if (absoluteOneStep) {
+        const absolutePredecessorSquare = this.notationService.arrayToChessNotation(absoluteOneStep.notation);
+
+        if (absolutePredecessorSquare) {
+          const twoStepMove: IntermediaryMove = {
+            notation: {
+              x: PAWN_DOUBLE_STEP.dx * direction,
+              y: PAWN_DOUBLE_STEP.dy * direction,
+            },
+            type: PAWN_DOUBLE_STEP.type,
+            predecessor: absolutePredecessorSquare,
+          };
+          potentialMoves.push(twoStepMove);
+        }
+      }
     }
 
-    const absoluteMoves = [...moves, ...captures].map((move) => this.sharedService.localMoveToAbsoluteMove(square, move)).filter((move): move is IntermediaryMove => move !== null);
+    // calculate captures now
+    const captures = [PAWN_CAPTURE_LEFT, PAWN_CAPTURE_RIGHT].map((captureOffset) => ({
+      notation: {
+        x: captureOffset.dx * direction,
+        y: captureOffset.dy * direction,
+      },
+      type: captureOffset.type,
+    }));
+
+    potentialMoves.push(...captures);
+
+    const absoluteMoves = potentialMoves.map((localMove) => this.sharedService.localMoveToAbsoluteMove(square, localMove)).filter((move): move is IntermediaryMove => move !== null);
 
     return absoluteMoves;
   }
