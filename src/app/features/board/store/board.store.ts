@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ComponentStore } from '@ngrx/component-store';
-import { Board, BoardTile } from '../interfaces/board.interface';
+import { BoardTile } from '../interfaces/board.interface';
 import { BoardService } from '../services/board.service';
 import { BoardState, initialBoardState } from './interfaces/board-store.interface';
 

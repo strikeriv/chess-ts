@@ -11,11 +11,12 @@ import { SharedService } from './piece/services/piece-moves/shared.service';
 import { BoardService } from './services/board.service';
 import { NotationService } from './services/notation/notation.service';
 import { BoardStore } from './store/board.store';
+import { BishopService } from './piece/services/piece-moves/bishop.service';
 
 @Component({
   selector: 'app-board',
   imports: [CommonModule, PieceComponent],
-  providers: [BoardService, BoardStore, KnightService, NotationService, MovesService, PawnService, RookService, SharedService],
+  providers: [BishopService, BoardService, BoardStore, KnightService, NotationService, MovesService, PawnService, RookService, SharedService],
   templateUrl: './board.component.html',
   styleUrl: './board.component.scss',
 })

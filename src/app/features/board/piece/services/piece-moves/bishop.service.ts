@@ -4,16 +4,16 @@ import { NotationService } from '../../../services/notation/notation.service';
 import { Direction, IntermediaryMove, MovingPiece } from '../interfaces/moves.interface';
 import { SharedService } from './shared.service';
 
-const ROOK_DIRECTIONS: Direction[] = [
-  { dx: -1, dy: 0 }, // forward
-  { dx: 1, dy: 0 }, // backward
+const BISHOP_DIRECTIONS: Direction[] = [
+  { dx: -1, dy: -1 }, // forward left diagonal
+  { dx: -1, dy: 1 }, // forward right diagonal
 
-  { dx: 0, dy: -1 }, // left
-  { dx: 0, dy: 1 }, // right
+  { dx: 1, dy: -1 }, // backward left diagonal
+  { dx: 1, dy: 1 }, // backward right diagonal
 ];
 
 @Injectable()
-export class RookService {
+export class BishopService {
   constructor(
     private readonly notationService: NotationService,
     private readonly sharedService: SharedService,
@@ -27,7 +27,7 @@ export class RookService {
     const moves: IntermediaryMove[] = [];
 
     // we use for loops, as predecessor move requires previous move to be valid
-    for (const dir of ROOK_DIRECTIONS) {
+    for (const dir of BISHOP_DIRECTIONS) {
       for (const move of this.traverseDirection(startNotation, dir)) {
         moves.push(move);
       }

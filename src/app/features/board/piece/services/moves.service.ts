@@ -7,6 +7,7 @@ import { IntermediaryMove, Move, MoveType, MovingPiece } from './interfaces/move
 import { KnightService } from './piece-moves/knight.service';
 import { PawnService } from './piece-moves/pawn.service';
 import { RookService } from './piece-moves/rook.service';
+import { BishopService } from './piece-moves/bishop.service';
 
 @Injectable()
 export class MovesService {
@@ -18,6 +19,7 @@ export class MovesService {
     private readonly boardStore: BoardStore,
 
     private readonly knightService: KnightService,
+    private readonly bishopService: BishopService,
     private readonly rookService: RookService,
     private readonly pawnService: PawnService,
   ) {
@@ -43,6 +45,8 @@ export class MovesService {
       moves.push(...this.pawnService.calculateMoves(movingPiece));
     } else if (type === PieceType.KNIGHT) {
       moves.push(...this.knightService.calculateMoves(movingPiece));
+    } else if (type === PieceType.BISHOP) {
+      moves.push(...this.bishopService.calculateMoves(movingPiece));
     } else if (type === PieceType.ROOK) {
       moves.push(...this.rookService.calculateMoves(movingPiece));
     }
