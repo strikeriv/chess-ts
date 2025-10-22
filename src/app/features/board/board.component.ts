@@ -37,7 +37,7 @@ export class BoardComponent {
     this.clearBoardFeatures();
 
     const isHinted = this.boardStore.getHintedTiles().find((hT) => hT.square === tile.square);
-    const isCapture = this.boardStore.getHintedTiles().find((cT) => cT.square === tile.square);
+    const isCapture = this.boardStore.getCapturedTiles().find((cT) => cT.square === tile.square);
 
     if (isHinted) {
       this.movePieceToTile(tile);
@@ -48,6 +48,7 @@ export class BoardComponent {
     } else {
       // do nothing
       this.clearBoardFeatures();
+      this.clearSelectedTile();
     }
   }
 
