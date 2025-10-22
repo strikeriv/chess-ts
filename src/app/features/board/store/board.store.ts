@@ -3,6 +3,8 @@ import { ComponentStore } from '@ngrx/component-store';
 import { BoardTile } from '../interfaces/board.interface';
 import { BoardService } from '../services/board.service';
 import { BoardState, initialBoardState } from './interfaces/board-store.interface';
+import { ChessSquare } from '../services/notation/models/notation.model';
+import { Move } from '../piece/services/interfaces/moves.interface';
 
 @Injectable() // Must be injectable
 export class BoardStore extends ComponentStore<BoardState> {
@@ -18,10 +20,26 @@ export class BoardStore extends ComponentStore<BoardState> {
   readonly board$ = this.select((state) => state.board);
   readonly tiles$ = this.select((state) => state.board.tiles);
   readonly turn$ = this.select((state) => state.currentTurn);
+
   readonly validMoves$ = this.select((state) => state.validMoves);
+
+  readonly hintedTiles$ = this.select((state) => state.hintedTiles);
+  readonly capturedTiles$ = this.select((state) => state.capturedTiles);
 
   getTiles(): BoardTile[][] {
     return this.get().board.tiles;
+  }
+
+  getValidMoves(): Map<ChessSquare, Move[]> {
+    return this.get().validMoves;
+  }
+
+  getHintedTiles(): BoardTile[] {
+    return this.get().hintedTiles;
+  }
+
+  getCapturedTiles(): BoardTile[] {
+    return this.get().capturedTiles;
   }
 
   // setters
@@ -31,5 +49,20 @@ export class BoardStore extends ComponentStore<BoardState> {
       ...state.board,
       tiles: newBoardTiles,
     },
+  }));
+
+  readonly setValidMoves = this.updater((state, validMoves: Map<ChessSquare, Move[]>) => ({
+    ...state,
+    validMoves,
+  }));
+
+  readonly setHintedTiles = this.updater((state, hintedTiles: BoardTile[]) => ({
+    ...state,
+    hintedTiles,
+  }));
+
+  readonly setCapturedTiles = this.updater((state, capturedTiles: BoardTile[]) => ({
+    ...state,
+    capturedTiles,
   }));
 }

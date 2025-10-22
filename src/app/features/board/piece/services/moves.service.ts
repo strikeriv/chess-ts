@@ -9,6 +9,8 @@ import { PawnService } from './piece-moves/pawn.service';
 import { RookService } from './piece-moves/rook.service';
 import { BishopService } from './piece-moves/bishop.service';
 import { QueenService } from './piece-moves/queen.service';
+import { KingService } from './piece-moves/king.service';
+import { ChessSquare } from '../../services/notation/models/notation.model';
 
 @Injectable()
 export class MovesService {
@@ -22,13 +24,29 @@ export class MovesService {
     private readonly knightService: KnightService,
     private readonly bishopService: BishopService,
     private readonly queenService: QueenService,
+    private readonly kingService: KingService,
     private readonly rookService: RookService,
     private readonly pawnService: PawnService,
   ) {
     this.board = this.boardStore.getTiles();
   }
 
-  calculateMovesForPiece(tile: BoardTile): Move[] {
+  calculateAllMoves(): Map<ChessSquare, Move[]> {
+    const allMoves = new Map<ChessSquare, Move[]>();
+
+    for (const rank of this.board) {
+      for (const tile of rank) {
+        if (tile.piece) {
+          const moves = this.calculateMovesForPiece(tile);
+          allMoves.set(tile.square, moves);
+        }
+      }
+    }
+
+    return allMoves;
+  }
+
+  private calculateMovesForPiece(tile: BoardTile): Move[] {
     // clear moves
     this.validMoves = [];
 
@@ -54,6 +72,9 @@ export class MovesService {
     } else if (type === PieceType.QUEEN) {
       // queen combines rook and bishop moves
       moves.push(...this.queenService.calculateMoves(movingPiece));
+    } else {
+      // must be king
+      moves.push(...this.kingService.calculateMoves(movingPiece));
     }
 
     return this.calculateValidMoves(moves, tile);
@@ -146,6 +167,11 @@ export class MovesService {
     }
 
     if (tile.piece) {
+      if (tile.piece.type === PieceType.KING) {
+        return false; // cannot capture king
+      }
+
+      // only able to capture opposite color
       return tile.piece.color != movingTile.piece!.color;
     }
 

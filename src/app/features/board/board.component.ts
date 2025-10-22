@@ -5,6 +5,7 @@ import { PieceComponent } from './piece/piece.component';
 import { MoveType } from './piece/services/interfaces/moves.interface';
 import { MovesService } from './piece/services/moves.service';
 import { BishopService } from './piece/services/piece-moves/bishop.service';
+import { KingService } from './piece/services/piece-moves/king.service';
 import { KnightService } from './piece/services/piece-moves/knight.service';
 import { PawnService } from './piece/services/piece-moves/pawn.service';
 import { QueenService } from './piece/services/piece-moves/queen.service';
@@ -17,15 +18,12 @@ import { BoardStore } from './store/board.store';
 @Component({
   selector: 'app-board',
   imports: [CommonModule, PieceComponent],
-  providers: [BishopService, BoardService, BoardStore, KnightService, NotationService, MovesService, PawnService, QueenService, RookService, SharedService],
+  providers: [BishopService, BoardService, BoardStore, KingService, KnightService, NotationService, MovesService, PawnService, QueenService, RookService, SharedService],
   templateUrl: './board.component.html',
   styleUrl: './board.component.scss',
 })
 export class BoardComponent {
   readonly tiles$ = this.boardStore.tiles$;
-
-  capturedTiles: BoardTile[] = [];
-  hintedTiles: BoardTile[] = [];
 
   selectedTile: BoardTile | undefined = undefined;
 
@@ -40,8 +38,8 @@ export class BoardComponent {
   onTileSelected(tile: BoardTile) {
     this.clearBoardFeatures();
 
-    const isHinted = this.hintedTiles.find((hT) => hT.square === tile.square);
-    const isCapture = this.capturedTiles.find((cT) => cT.square === tile.square);
+    const isHinted = this.boardStore.getHintedTiles().find((hT) => hT.square === tile.square);
+    const isCapture = this.boardStore.getHintedTiles().find((cT) => cT.square === tile.square);
 
     if (isHinted) {
       this.movePieceToTile(tile);
@@ -56,6 +54,9 @@ export class BoardComponent {
   }
 
   private onPieceSelected(tile: BoardTile): void {
+    // we need to calculate all valid moves
+    this.boardStore.setValidMoves(this.movesService.calculateAllMoves());
+
     // TODO: there's a bug here when deselecting and selecting the same piece multiple tiles
     // fix at some time idk
     if (this.selectedTile) {
@@ -73,10 +74,10 @@ export class BoardComponent {
 
     //calculate valid moves for selected piece
     // clear previous
-    this.hintedTiles = [];
-    this.capturedTiles = [];
+    const hintedTiles: BoardTile[] = [];
+    const capturedTiles: BoardTile[] = [];
 
-    const moves = this.movesService.calculateMovesForPiece(tile);
+    const moves = this.boardStore.getValidMoves().get(tile.square) || [];
 
     // for now, highlight the valid moves
     for (const move of moves) {
@@ -87,12 +88,16 @@ export class BoardComponent {
 
       if (type === MoveType.NORMAL) {
         tile.isHint = true;
-        this.hintedTiles.push(tile);
+        hintedTiles.push(tile);
       } else if (type === MoveType.CAPTURE) {
         tile.isCapture = true;
-        this.capturedTiles.push(tile);
+        capturedTiles.push(tile);
       }
     }
+
+    // update store
+    this.boardStore.setHintedTiles(hintedTiles);
+    this.boardStore.setCapturedTiles(capturedTiles);
 
     this.selectedTile = tile;
   }
@@ -113,8 +118,10 @@ export class BoardComponent {
 
     // update variables to keep state
     this.boardStore.getTiles()[nX][nY].isHint = false;
-    this.hintedTiles = [];
-    this.capturedTiles = [];
+
+    // update store
+    this.boardStore.setHintedTiles([]);
+    this.boardStore.setCapturedTiles([]);
 
     // deselect the tile
     this.clearHighlightedTile();
@@ -136,19 +143,21 @@ export class BoardComponent {
 
     // update variables to keep state
     this.boardStore.getTiles()[nX][nY].isCapture = false;
-    this.hintedTiles = [];
-    this.capturedTiles = [];
+
+    // update store
+    this.boardStore.setHintedTiles([]);
+    this.boardStore.setCapturedTiles([]);
 
     // deselect the tile
     this.clearHighlightedTile();
   }
 
   private clearBoardFeatures() {
-    for (const tile of this.hintedTiles) {
+    for (const tile of this.boardStore.getHintedTiles()) {
       tile.isHint = false;
     }
 
-    for (const tile of this.capturedTiles) {
+    for (const tile of this.boardStore.getCapturedTiles()) {
       tile.isCapture = false;
     }
   }
