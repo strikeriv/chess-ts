@@ -5,6 +5,8 @@ import { ChessSquare } from '../../services/notation/models/notation.model';
 export interface BoardState {
   board: Board;
   currentTurn: TileColor;
+
+  selectedTile?: BoardTile; // currently selected tile
   validMoves: Map<ChessSquare, Move[]>; // square -> list of valid moves for that square
 
   hintedTiles: BoardTile[]; // tiles that are currently hinted
@@ -17,6 +19,8 @@ export const initialBoardState: BoardState = {
     rotation: BoardRotation.NORMAL,
   },
   currentTurn: TileColor.LIGHT, // white always goes first
+
+  selectedTile: undefined,
   validMoves: new Map(), // empty map, since no moves are valid
 
   hintedTiles: [],

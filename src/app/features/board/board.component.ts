@@ -25,8 +25,6 @@ import { BoardStore } from './store/board.store';
 export class BoardComponent {
   readonly tiles$ = this.boardStore.tiles$;
 
-  selectedTile: BoardTile | undefined = undefined;
-
   boardRotation = BoardRotation.NORMAL;
 
   constructor(
@@ -57,22 +55,10 @@ export class BoardComponent {
     // we need to calculate all valid moves
     this.boardStore.setValidMoves(this.movesService.calculateAllMoves());
 
-    // TODO: there's a bug here when deselecting and selecting the same piece multiple tiles
-    // fix at some time idk
-    if (this.selectedTile) {
-      if (this.selectedTile.square === tile.square) {
-        // deselect the piece, since you clicked on the same one
-        this.clearHighlightedTile();
-      } else {
-        this.clearHighlightedTile();
+    const doShowFeatures = this.updateSelectedTile(tile);
+    if (!doShowFeatures) return;
 
-        tile.isSelected = true;
-      }
-    } else {
-      tile.isSelected = true;
-    }
-
-    //calculate valid moves for selected piece
+    // calculate valid moves for selected piece
     // clear previous
     const hintedTiles: BoardTile[] = [];
     const capturedTiles: BoardTile[] = [];
@@ -98,14 +84,12 @@ export class BoardComponent {
     // update store
     this.boardStore.setHintedTiles(hintedTiles);
     this.boardStore.setCapturedTiles(capturedTiles);
-
-    this.selectedTile = tile;
   }
 
   private capturePieceOnTile(tile: BoardTile) {
     // player wants to capture piece on the square
     // update the piece for the tile we are moving
-    const selectedTile = { ...this.selectedTile! }; // a tile is selected if there are hints on the board
+    const selectedTile = { ...this.boardStore.getSelectedTile()! }; // a tile is selected if there are hints on the board
 
     const { x: oX, y: oY } = this.notationService.chessToArrayNotation(selectedTile.square);
     const { x: nX, y: nY } = this.notationService.chessToArrayNotation(tile.square);
@@ -123,14 +107,14 @@ export class BoardComponent {
     this.boardStore.setHintedTiles([]);
     this.boardStore.setCapturedTiles([]);
 
-    // deselect the tile
-    this.clearHighlightedTile();
+    // clear selected tile
+    this.clearSelectedTile();
   }
 
   private movePieceToTile(tile: BoardTile): void {
     // player wants to move to this square
     // update the piece for the tile we are moving
-    const selectedTile = { ...this.selectedTile! }; // a tile is selected if there are hints on the board
+    const selectedTile = { ...this.boardStore.getSelectedTile()! }; // a tile is selected if there are hints on the board
 
     const { x: oX, y: oY } = this.notationService.chessToArrayNotation(selectedTile.square);
     const { x: nX, y: nY } = this.notationService.chessToArrayNotation(tile.square);
@@ -148,8 +132,8 @@ export class BoardComponent {
     this.boardStore.setHintedTiles([]);
     this.boardStore.setCapturedTiles([]);
 
-    // deselect the tile
-    this.clearHighlightedTile();
+    // clear selected tile
+    this.clearSelectedTile();
   }
 
   private clearBoardFeatures() {
@@ -162,8 +146,37 @@ export class BoardComponent {
     }
   }
 
-  private clearHighlightedTile() {
-    this.selectedTile!.isSelected = false;
-    this.selectedTile = undefined;
+  private updateSelectedTile(tile: BoardTile): boolean {
+    const currentlySelectedTile = this.boardStore.getSelectedTile();
+    if (currentlySelectedTile) {
+      this.clearSelectedTile();
+
+      // handle the edge case where the same tile is selected
+      if (currentlySelectedTile.square === tile.square) return false;
+    }
+
+    // otherwise, no tile is selected
+    this.selectTile(tile);
+
+    return true;
+  }
+
+  private selectTile(tile: BoardTile) {
+    // make sure no other tile is selected
+    this.clearSelectedTile();
+
+    tile.isSelected = true;
+    this.boardStore.setSelectedTile(tile);
+  }
+
+  private clearSelectedTile() {
+    const selectedTile = this.boardStore.getSelectedTile();
+    if (selectedTile) {
+      selectedTile.isSelected = false;
+
+      this.boardStore.setHintedTiles([]);
+      this.boardStore.setCapturedTiles([]);
+      this.boardStore.setSelectedTile(undefined);
+    }
   }
 }
