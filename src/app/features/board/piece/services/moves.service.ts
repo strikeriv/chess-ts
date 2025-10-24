@@ -15,7 +15,9 @@ import { ChessSquare } from '../../services/notation/models/notation.model';
 @Injectable()
 export class MovesService {
   board: BoardTile[][];
+
   validMoves: Move[] = [];
+  checkingMoves: Move[] = [];
 
   constructor(
     private readonly notationService: NotationService,
@@ -32,7 +34,42 @@ export class MovesService {
   }
 
   calculateAllMoves(): Map<ChessSquare, Move[]> {
-    return new Map<ChessSquare, Move[]>([...this.calculateAllWhiteMoves(), ...this.calculateAllBlackMoves()]);
+    const allMoves = new Map<ChessSquare, Move[]>([...this.calculateAllWhiteMoves(), ...this.calculateAllBlackMoves()]);
+
+    if (this.boardStore.getCheckingSquares().length > 0) {
+      // in check, so filter moves
+      const checkingSquares = this.boardStore.getCheckingSquares();
+      const filteredMoves = new Map<ChessSquare, Move[]>();
+
+      for (const [square, moves] of allMoves) {
+        const filtered = moves.filter((move) => {
+          // only keep moves that resolve the check
+          // remove the king move also
+          const tile = this.boardStore
+            .getTiles()
+            .flat()
+            .find((t) => t.square === square)!;
+
+          if (tile.piece?.type === PieceType.KING) {
+            // king can only move if it moves out of check
+            // this can be determined by seeing if the move square is in checking squares
+
+            return false;
+          }
+
+          return checkingSquares.includes(move.square);
+        });
+
+        if (filtered.length > 0) {
+          filteredMoves.set(square, filtered);
+        }
+      }
+
+      console.log(filteredMoves, 'filtered moves in check');
+      return filteredMoves;
+    }
+
+    return allMoves;
   }
 
   calculateAllWhiteMoves(): Map<ChessSquare, Move[]> {
@@ -190,11 +227,23 @@ export class MovesService {
         // opposing king is in check
         console.log(move, movingTile, 'king is in check!');
         // set checking move
+
         move.isCheckingMove = true;
 
         // since this move is a check move, we need to set all predecessors as checking moves too
         console.log(move, 'move');
         this.updatePredecessorCheckingMoves(move);
+
+        // set valid moves to only checking moves
+        const capturePieceMove = this.intermediaryMoveToMove(move, MoveType.CAPTURE);
+        const checkingMoves = this.validMoves.filter((m) => m.isCheckingMove);
+        checkingMoves.push(capturePieceMove);
+
+        console.log(checkingMoves, 'checking moves');
+        console.log(this.validMoves, 'all valid moves');
+
+        // moving tile should also be counted as a move, since you can capture the piece putting king in check
+        this.boardStore.setCheckingSquares([...checkingMoves.map((m) => m.square), movingTile.square]);
       }
 
       // only able to capture opposite color
@@ -222,15 +271,28 @@ export class MovesService {
   }
 
   private updatePredecessorCheckingMoves(move: IntermediaryMove): void {
-    console.log('updating predecessor checking moves');
-
     const { predecessor } = move;
     if (predecessor) {
       const predMove = this.validMoves.find((m) => m.square === predecessor);
       if (predMove) {
         predMove.isCheckingMove = true;
+
+        if (predMove.predecessor) {
+          this.updatePredecessorCheckingMoves(this.squareToIntermediaryMove(predMove)!);
+        }
       }
+    } else {
+      move.isCheckingMove = true;
     }
+  }
+
+  private squareToIntermediaryMove(move: Move): IntermediaryMove | null {
+    const notation = this.notationService.chessToArrayNotation(move.square);
+
+    return {
+      notation,
+      predecessor: move.predecessor,
+    };
   }
 
   // check to see if tile is occupied
@@ -240,11 +302,12 @@ export class MovesService {
 
   // intermediary move to move
   private intermediaryMoveToMove(move: IntermediaryMove, type: MoveType): Move {
-    const { notation, isCheckingMove } = move;
+    const { notation, isCheckingMove, predecessor } = move;
 
     return {
       square: this.notationService.arrayToChessNotation(notation),
       type,
+      predecessor,
 
       isCheckingMove,
     };

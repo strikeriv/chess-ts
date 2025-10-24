@@ -20,6 +20,8 @@ export type BoardTile = {
   piece?: Piece;
 
   // modifiers
+  isInCheck: boolean;
+
   isSelected: boolean;
   isHint: boolean;
   isCapture: boolean;

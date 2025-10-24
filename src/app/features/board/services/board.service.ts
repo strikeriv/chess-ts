@@ -48,6 +48,8 @@ export class BoardService {
         color: this.calculateTileColor(notation),
         piece: this.calculateTilePiece(square),
 
+        isInCheck: false,
+
         isSelected: false,
         isCapture: false,
         isHint: false,

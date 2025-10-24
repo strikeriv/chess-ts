@@ -43,6 +43,10 @@ export class BoardStore extends ComponentStore<BoardState> {
     return this.get().validMoves;
   }
 
+  getCheckingSquares(): ChessSquare[] {
+    return this.get().checkingSquares;
+  }
+
   getHintedTiles(): BoardTile[] {
     return this.get().hintedTiles;
   }
@@ -73,6 +77,11 @@ export class BoardStore extends ComponentStore<BoardState> {
   readonly setValidMoves = this.updater((state, validMoves: Map<ChessSquare, Move[]>) => ({
     ...state,
     validMoves,
+  }));
+
+  readonly setCheckingSquares = this.updater((state, checkingSquares: ChessSquare[]) => ({
+    ...state,
+    checkingSquares,
   }));
 
   readonly setHintedTiles = this.updater((state, hintedTiles: BoardTile[]) => ({

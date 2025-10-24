@@ -7,7 +7,9 @@ export interface BoardState {
   currentTurn: BoardTurn;
 
   selectedTile?: BoardTile; // currently selected tile
+
   validMoves: Map<ChessSquare, Move[]>; // square -> list of valid moves for that square
+  checkingSquares: ChessSquare[]; // squares that are putting the king in check
 
   hintedTiles: BoardTile[]; // tiles that are currently hinted
   capturedTiles: BoardTile[]; // tiles that are currently capturable
@@ -22,6 +24,7 @@ export const initialBoardState: BoardState = {
 
   selectedTile: undefined,
   validMoves: new Map(), // empty map, since no moves are valid
+  checkingSquares: [],
 
   hintedTiles: [],
   capturedTiles: [],

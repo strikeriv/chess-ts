@@ -27,6 +27,7 @@ export enum MoveType {
 export type Move = {
   square: ChessSquare;
   type: MoveType;
+  predecessor?: ChessSquare;
 
   // used for check
   isCheckingMove?: boolean;

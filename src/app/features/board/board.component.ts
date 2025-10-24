@@ -59,14 +59,8 @@ export class BoardComponent implements OnInit, OnDestroy {
 
     if (isHinted) {
       this.movePieceToTile(tile);
-
-      // after moving, check if the current player is in check
-      this.checkForCheck();
     } else if (isCapture) {
       this.capturePieceOnTile(tile);
-
-      // after capture, check if the current player is in check
-      this.checkForCheck();
     } else if (tile.piece) {
       this.onPieceSelected(tile);
     } else {
@@ -167,15 +161,6 @@ export class BoardComponent implements OnInit, OnDestroy {
 
     // clear selected tile
     this.clearSelectedTile();
-  }
-
-  private checkForCheck(): void {
-    const inCheck = this.checkService.isInCheck();
-    console.log(`In check: ${inCheck}`);
-    if (inCheck) {
-      const validMoves = this.checkService.filterCheckingMoves();
-      console.log(validMoves, 'moves');
-    }
   }
 
   private updateTurn(): void {

@@ -1,10 +1,9 @@
 import { Injectable } from '@angular/core';
-import { BoardStore } from '../store/board.store';
 import { BoardTile, BoardTurn } from '../interfaces/board.interface';
 import { PieceColor, PieceType } from '../models/pieces/piece.model';
-import { MovesService } from '../piece/services/moves.service';
 import { Move } from '../piece/services/interfaces/moves.interface';
-import { ChessSquare } from './notation/models/notation.model';
+import { MovesService } from '../piece/services/moves.service';
+import { BoardStore } from '../store/board.store';
 
 @Injectable()
 export class CheckService {
@@ -50,42 +49,37 @@ export class CheckService {
 
   // returns a map of moves that takes the player out of check
   // basically, filters moves that do not resolve the check
-  filterCheckingMoves(): Map<string, Move[]> {
-    const kingTile = this.findKingPosition();
-    const validMoves = new Map<string, Move[]>();
+  // filterCheckingMoves(): Map<string, Move[]> {
+  //   const kingTile = this.findKingPosition();
+  //   const validMoves = new Map<string, Move[]>();
 
-    // first, detetmine the squares that are putting the king in check
-    const checkingPieces = this.determineCheckingPieces();
-    console.log(checkingPieces, 'checking pieces');
+  // }
 
-    return validMoves;
-  }
+  // private determineCheckingPieces(): Map<ChessSquare, BoardTile[]> {
+  //   // loop through moves, find those that target the king's square
 
-  private determineCheckingPieces(): Map<ChessSquare, BoardTile[]> {
-    // loop through moves, find those that target the king's square
+  //   // square of piece putting king in check, and moves that target it
+  //   // for instance, bishop putting king in check, all diagonal moves to block/capture it
+  //   const kingTile = this.findKingPosition();
+  //   const checkingPieces = new Map<ChessSquare, BoardTile[]>();
 
-    // square of piece putting king in check, and moves that target it
-    // for instance, bishop putting king in check, all diagonal moves to block/capture it
-    const kingTile = this.findKingPosition();
-    const checkingPieces = new Map<ChessSquare, BoardTile[]>();
+  //   this.opponentMoves.forEach((moves, square) => {
+  //     // console.log(moves, square, 'moves per square');
+  //     if (moves.some((move) => move.square === kingTile.square)) {
+  //       // this piece sees the king, get moves for square
+  //       // will exist, since it sees king & will have valid moves since it moved there
+  //       const movesForPiece = this.opponentMoves.get(square)!;
+  //       console.log(movesForPiece, 'moves for piece');
+  //       // const tile =
 
-    this.opponentMoves.forEach((moves, square) => {
-      // console.log(moves, square, 'moves per square');
-      if (moves.some((move) => move.square === kingTile.square)) {
-        // this piece sees the king, get moves for square
-        // will exist, since it sees king & will have valid moves since it moved there
-        const movesForPiece = this.opponentMoves.get(square)!;
-        console.log(movesForPiece, 'moves for piece');
-        // const tile =
+  //       // if (tile) {
+  //       //   checkingPieces.set(square as ChessSquare, [tile]);
+  //       // }
+  //     }
+  //   });
 
-        // if (tile) {
-        //   checkingPieces.set(square as ChessSquare, [tile]);
-        // }
-      }
-    });
-
-    return checkingPieces;
-  }
+  //   return checkingPieces;
+  // }
 
   private findKingPosition(): BoardTile {
     const tiles = this.boardStore.getTiles();
