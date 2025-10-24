@@ -1,10 +1,10 @@
-import { Board, BoardRotation, BoardTile, TileColor } from '../../interfaces/board.interface';
+import { Board, BoardRotation, BoardTile, BoardTurn } from '../../interfaces/board.interface';
 import { Move } from '../../piece/services/interfaces/moves.interface';
 import { ChessSquare } from '../../services/notation/models/notation.model';
 
 export interface BoardState {
   board: Board;
-  currentTurn: TileColor;
+  currentTurn: BoardTurn;
 
   selectedTile?: BoardTile; // currently selected tile
   validMoves: Map<ChessSquare, Move[]>; // square -> list of valid moves for that square
@@ -18,7 +18,7 @@ export const initialBoardState: BoardState = {
     tiles: [], // generated on runtime
     rotation: BoardRotation.NORMAL,
   },
-  currentTurn: TileColor.LIGHT, // white always goes first
+  currentTurn: BoardTurn.WHITE, // white always goes first
 
   selectedTile: undefined,
   validMoves: new Map(), // empty map, since no moves are valid
