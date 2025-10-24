@@ -29,6 +29,7 @@ export class PawnService {
         y: PAWN_FORWARD_MOVE.dy * direction,
       },
       type: PAWN_FORWARD_MOVE.type,
+      origin: square,
     };
     potentialMoves.push(oneStepMove);
 
@@ -47,6 +48,7 @@ export class PawnService {
               y: PAWN_DOUBLE_STEP.dy * direction,
             },
             type: PAWN_DOUBLE_STEP.type,
+            origin: square,
             predecessor: absolutePredecessorSquare,
           };
           potentialMoves.push(twoStepMove);
@@ -60,6 +62,7 @@ export class PawnService {
         x: captureOffset.dx * direction,
         y: captureOffset.dy * direction,
       },
+      origin: square,
       type: captureOffset.type,
     }));
 

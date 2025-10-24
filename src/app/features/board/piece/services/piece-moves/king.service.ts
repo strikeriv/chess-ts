@@ -35,6 +35,7 @@ export class KingService {
         x: offset.dx,
         y: offset.dy,
       },
+      origin: square,
     }));
 
     const absoluteMoves: IntermediaryMove[] = potentialMoves.map((localMove) => this.sharedService.localMoveToAbsoluteMove(square, localMove)).filter((move): move is IntermediaryMove => move !== null);

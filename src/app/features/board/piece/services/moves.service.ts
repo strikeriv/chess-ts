@@ -187,6 +187,7 @@ export class MovesService {
       // check if predecessor is valid move
       const predecessorMove: IntermediaryMove = {
         notation: this.notationService.chessToArrayNotation(predecessor),
+        origin: movingTile.square,
       };
 
       const predecessorValid = this.isMoveValid(predecessorMove, movingTile);
@@ -209,13 +210,10 @@ export class MovesService {
 
   private updateMovesOnCheck(movingTile: BoardTile, move: IntermediaryMove) {
     // opposing king is in check
-    console.log(move, movingTile, 'king is in check!');
     // set checking move
-
     move.isCheckingMove = true;
 
     // since this move is a check move, we need to set all predecessors as checking moves too
-    console.log(move, 'move');
     this.updatePredecessorCheckingMoves(move);
 
     // set valid moves to only checking moves
@@ -223,11 +221,9 @@ export class MovesService {
     const checkingMoves = this.validMoves.filter((m) => m.isCheckingMove);
     checkingMoves.push(capturePieceMove);
 
-    console.log(checkingMoves, 'checking moves');
-    console.log(this.validMoves, 'all valid moves');
+    this.checkingMoves = checkingMoves;
 
     // moving tile should also be counted as a move, since you can capture the piece putting king in check
-    console.log([...checkingMoves.map((m) => m.square), movingTile.square], 'checking squares');
     this.boardStore.setCheckingSquares([...checkingMoves.map((m) => m.square), movingTile.square]);
   }
 
@@ -270,6 +266,7 @@ export class MovesService {
     return {
       notation,
       predecessor: move.predecessor,
+      origin: move.origin,
     };
   }
 
@@ -285,6 +282,8 @@ export class MovesService {
     return {
       square: this.notationService.arrayToChessNotation(notation),
       type,
+
+      origin: move.origin,
       predecessor,
 
       isCheckingMove,

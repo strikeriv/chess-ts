@@ -57,10 +57,12 @@ export class RookService {
       if (predecessor) {
         moves.push({
           notation: targetNotation,
+
+          origin: this.notationService.arrayToChessNotation(start),
           predecessor: this.notationService.arrayToChessNotation(predecessor.notation),
         });
       } else {
-        moves.push({ notation: targetNotation });
+        moves.push({ notation: targetNotation, origin: this.notationService.arrayToChessNotation(start) });
       }
     }
 

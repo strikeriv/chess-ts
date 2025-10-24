@@ -108,6 +108,14 @@ export class CheckService {
   }
 
   private determineKingCaptures(moves: Map<ChessSquare, Move[]>): Map<ChessSquare, Move[]> {
+    console.log(moves, 'moves before king capture logic');
+    // to start, determine the moves available to the side who is placing in check
+    const kingTile = this.findKingPosition();
+    const checkingTile = this.movesService.checkingMoves[0].origin;
+    const checkingSideMoves = kingTile.piece!.color === PieceColor.BLACK ? this.movesService.calculateAllWhiteMoves() : this.movesService.calculateAllBlackMoves();
+
+    console.log(checkingTile, 'checking side moves');
+    console.log(this.movesService.checkingMoves, 'checking moves');
     return moves;
   }
 
