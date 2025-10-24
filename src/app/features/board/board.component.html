@@ -2,8 +2,8 @@
   <h1 class="pb-16 text-[1.5rem] font-bold">Current Turn: {{ turnText }}</h1>
 
   <div class="grid grid-cols-8 gap-y-0">
-    @for (file of tiles$ | async; track $index) {
-      @for (tile of file; track tile.id) {
+    @for (file of tiles$ | async; track $index; let fIndex = $index) {
+      @for (tile of file; track tile.id; let tIndex = $index) {
         <div class="relative w-24 h-24" [ngClass]="[tile.color, tile.isSelected ? 'bg-yellow-300!' : '']" (click)="onTileSelected(tile)">
           @if (tile.piece; as piece) {
             <board-piece [piece]="piece" />
@@ -21,7 +21,14 @@
             </div>
           }
 
-          {{ tile.square }}
+          <!-- Render Text on tiles -->
+          @if (fIndex === 7) {
+            <span class="absolute right-0 bottom-0 text-[1.5rem] font-bold pr-[3px]" [ngClass]="[tile.color === 'bg-orange-300' ? 'text-yellow-800' : 'text-orange-300']">{{ indexToFile(tIndex) }}</span>
+          }
+
+          @if (tIndex === 0) {
+            <span class="absolute left-0 top-0 text-[1.5rem] font-bold pl-[3px]" [ngClass]="[tile.color === 'bg-orange-300' ? 'text-yellow-800' : 'text-orange-300']">{{ indexToRank(fIndex) }}</span>
+          }
         </div>
       }
     }

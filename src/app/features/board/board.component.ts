@@ -213,4 +213,13 @@ export class BoardComponent implements OnInit, OnDestroy {
       this.boardStore.setSelectedTile(undefined);
     }
   }
+
+  // misc stuff for board
+  indexToFile(index: number): string {
+    return String.fromCodePoint('a'.codePointAt(0)! + index);
+  }
+
+  indexToRank(index: number): string {
+    return String.fromCodePoint('8'.codePointAt(0)! - index);
+  }
 }
