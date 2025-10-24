@@ -23,6 +23,8 @@ export class SharedService {
     if (this.isArrayNotationValid(absoluteNotation)) {
       return {
         notation: absoluteNotation,
+
+        origin: square,
         predecessor,
         type,
       };
