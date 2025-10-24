@@ -15,11 +15,12 @@ import { BoardService } from './services/board.service';
 import { NotationService } from './services/notation/notation.service';
 import { BoardStore } from './store/board.store';
 import { Subject, takeUntil } from 'rxjs';
+import { CheckService } from './services/check.service';
 
 @Component({
   selector: 'app-board',
   imports: [CommonModule, PieceComponent],
-  providers: [BishopService, BoardService, BoardStore, KingService, KnightService, NotationService, MovesService, PawnService, QueenService, RookService, SharedService],
+  providers: [BishopService, BoardService, BoardStore, CheckService, KingService, KnightService, NotationService, MovesService, PawnService, QueenService, RookService, SharedService],
   templateUrl: './board.component.html',
   styleUrl: './board.component.scss',
 })
@@ -35,6 +36,7 @@ export class BoardComponent implements OnInit, OnDestroy {
   constructor(
     private readonly notationService: NotationService,
     private readonly movesService: MovesService,
+    private readonly checkService: CheckService,
     private readonly boardStore: BoardStore,
   ) {}
 
@@ -57,8 +59,14 @@ export class BoardComponent implements OnInit, OnDestroy {
 
     if (isHinted) {
       this.movePieceToTile(tile);
+
+      // after moving, check if the current player is in check
+      this.checkForCheck();
     } else if (isCapture) {
       this.capturePieceOnTile(tile);
+
+      // after capture, check if the current player is in check
+      this.checkForCheck();
     } else if (tile.piece) {
       this.onPieceSelected(tile);
     } else {
@@ -84,10 +92,14 @@ export class BoardComponent implements OnInit, OnDestroy {
 
     // for now, highlight the valid moves
     for (const move of moves) {
-      const { square, type } = move;
+      const { square, type, isCheckingMove } = move;
       const { x, y } = this.notationService.chessToArrayNotation(square);
 
       const tile = this.boardStore.getTiles()[x][y];
+
+      if (isCheckingMove) {
+        continue;
+      }
 
       if (type === MoveType.NORMAL) {
         tile.isHint = true;
@@ -155,6 +167,15 @@ export class BoardComponent implements OnInit, OnDestroy {
 
     // clear selected tile
     this.clearSelectedTile();
+  }
+
+  private checkForCheck(): void {
+    const inCheck = this.checkService.isInCheck();
+    console.log(`In check: ${inCheck}`);
+    if (inCheck) {
+      const validMoves = this.checkService.filterCheckingMoves();
+      console.log(validMoves, 'moves');
+    }
   }
 
   private updateTurn(): void {

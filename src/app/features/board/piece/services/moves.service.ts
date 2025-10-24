@@ -32,11 +32,30 @@ export class MovesService {
   }
 
   calculateAllMoves(): Map<ChessSquare, Move[]> {
+    return new Map<ChessSquare, Move[]>([...this.calculateAllWhiteMoves(), ...this.calculateAllBlackMoves()]);
+  }
+
+  calculateAllWhiteMoves(): Map<ChessSquare, Move[]> {
     const allMoves = new Map<ChessSquare, Move[]>();
 
     for (const rank of this.board) {
       for (const tile of rank) {
-        if (tile.piece) {
+        if (tile.piece && tile.piece.color === PieceColor.WHITE) {
+          const moves = this.calculateMovesForPiece(tile);
+          allMoves.set(tile.square, moves);
+        }
+      }
+    }
+
+    return allMoves;
+  }
+
+  calculateAllBlackMoves(): Map<ChessSquare, Move[]> {
+    const allMoves = new Map<ChessSquare, Move[]>();
+
+    for (const rank of this.board) {
+      for (const tile of rank) {
+        if (tile.piece && tile.piece.color === PieceColor.BLACK) {
           const moves = this.calculateMovesForPiece(tile);
           allMoves.set(tile.square, moves);
         }
@@ -167,8 +186,15 @@ export class MovesService {
     }
 
     if (tile.piece) {
-      if (tile.piece.type === PieceType.KING) {
-        return false; // cannot capture king
+      if (tile.piece.type === PieceType.KING && tile.piece.color !== movingTile.piece!.color) {
+        // opposing king is in check
+        console.log(move, movingTile, 'king is in check!');
+        // set checking move
+        move.isCheckingMove = true;
+
+        // since this move is a check move, we need to set all predecessors as checking moves too
+        console.log(move, 'move');
+        this.updatePredecessorCheckingMoves(move);
       }
 
       // only able to capture opposite color
@@ -195,6 +221,18 @@ export class MovesService {
     }
   }
 
+  private updatePredecessorCheckingMoves(move: IntermediaryMove): void {
+    console.log('updating predecessor checking moves');
+
+    const { predecessor } = move;
+    if (predecessor) {
+      const predMove = this.validMoves.find((m) => m.square === predecessor);
+      if (predMove) {
+        predMove.isCheckingMove = true;
+      }
+    }
+  }
+
   // check to see if tile is occupied
   private isTileMoveValid(tile: BoardTile): boolean {
     return !tile.piece;
@@ -202,11 +240,13 @@ export class MovesService {
 
   // intermediary move to move
   private intermediaryMoveToMove(move: IntermediaryMove, type: MoveType): Move {
-    const { notation } = move;
+    const { notation, isCheckingMove } = move;
 
     return {
       square: this.notationService.arrayToChessNotation(notation),
       type,
+
+      isCheckingMove,
     };
   }
 }

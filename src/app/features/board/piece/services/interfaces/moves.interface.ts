@@ -10,6 +10,8 @@ export interface IntermediaryMove {
   notation: ArrayNotation;
   type?: MoveType; // optional pre-defined move. mostly used for pawns
   predecessor?: ChessSquare; // used to make sure previous square is valid for the move
+
+  isCheckingMove?: boolean;
 }
 
 export interface Direction {
@@ -25,4 +27,7 @@ export enum MoveType {
 export type Move = {
   square: ChessSquare;
   type: MoveType;
+
+  // used for check
+  isCheckingMove?: boolean;
 };
