@@ -105,18 +105,12 @@ export class BoardComponent implements OnInit, OnDestroy {
       if (type === MoveType.NORMAL) {
         moveTile.isHint = true;
       } else if (type === MoveType.CAPTURE) {
-        // if (moveTile.isGuarded) {
-        //   // check if opposing piece
-        //   if (moveTile.piece!.color === tile.piece!.color) {
-        //     continue;
-        //   }
-        // }
+        // since all moves count, (guarded / capturable), filter ones by opposite color
+        if (tile.piece!.color === moveTile.piece!.color) {
+          continue;
+        }
 
-        // if (moveTile.color !== tile.color) {
-        //   moveTile.isCapture = true;
-        //   capturedTiles.push(moveTile);
-        // }
-
+        // for kings only, check if they can capture a piece
         moveTile.isCapture = true;
       }
 
@@ -195,6 +189,8 @@ export class BoardComponent implements OnInit, OnDestroy {
   }
 
   private updateSelectedTile(tile: BoardTile): boolean {
+    this.clearBoardFeatures();
+
     const currentlySelectedTile = this.boardStore.getSelectedTile();
     if (currentlySelectedTile) {
       this.clearSelectedTile();
