@@ -25,6 +25,11 @@ export type BoardTile = {
   isCapture: boolean;
 };
 
+export enum BoardTurn {
+  WHITE = 'w',
+  BLACK = 'b',
+}
+
 export enum TileColor {
   LIGHT = 'bg-orange-300',
   DARK = 'bg-yellow-800',

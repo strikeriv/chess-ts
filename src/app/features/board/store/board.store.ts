@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ComponentStore } from '@ngrx/component-store';
-import { BoardTile } from '../interfaces/board.interface';
+import { BoardTile, BoardTurn } from '../interfaces/board.interface';
 import { BoardService } from '../services/board.service';
 import { BoardState, initialBoardState } from './interfaces/board-store.interface';
 import { ChessSquare } from '../services/notation/models/notation.model';
@@ -31,6 +31,10 @@ export class BoardStore extends ComponentStore<BoardState> {
     return this.get().board.tiles;
   }
 
+  getTurn(): BoardTurn {
+    return this.get().currentTurn;
+  }
+
   getSelectedTile(): BoardTile | undefined {
     return this.get().selectedTile;
   }
@@ -54,6 +58,11 @@ export class BoardStore extends ComponentStore<BoardState> {
       ...state.board,
       tiles: newBoardTiles,
     },
+  }));
+
+  readonly setCurrentTurn = this.updater((state, currentTurn: BoardTurn) => ({
+    ...state,
+    currentTurn,
   }));
 
   readonly setSelectedTile = this.updater((state, selectedTile: BoardTile | undefined) => ({

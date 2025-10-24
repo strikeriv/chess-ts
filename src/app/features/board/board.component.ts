@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
-import { BoardRotation, BoardTile } from './interfaces/board.interface';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { BoardRotation, BoardTile, BoardTurn } from './interfaces/board.interface';
 import { PieceComponent } from './piece/piece.component';
 import { MoveType } from './piece/services/interfaces/moves.interface';
 import { MovesService } from './piece/services/moves.service';
@@ -14,6 +14,7 @@ import { SharedService } from './piece/services/piece-moves/shared.service';
 import { BoardService } from './services/board.service';
 import { NotationService } from './services/notation/notation.service';
 import { BoardStore } from './store/board.store';
+import { Subject, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-board',
@@ -22,16 +23,31 @@ import { BoardStore } from './store/board.store';
   templateUrl: './board.component.html',
   styleUrl: './board.component.scss',
 })
-export class BoardComponent {
+export class BoardComponent implements OnInit, OnDestroy {
   readonly tiles$ = this.boardStore.tiles$;
+  readonly turn$ = this.boardStore.turn$;
 
+  turnText = 'White';
   boardRotation = BoardRotation.NORMAL;
+
+  private readonly destroySubscriptions$ = new Subject<void>();
 
   constructor(
     private readonly notationService: NotationService,
     private readonly movesService: MovesService,
     private readonly boardStore: BoardStore,
   ) {}
+
+  ngOnInit(): void {
+    this.turn$.pipe(takeUntil(this.destroySubscriptions$)).subscribe((currentTurn) => {
+      this.turnText = currentTurn === BoardTurn.WHITE ? 'White' : 'Black';
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.destroySubscriptions$.next();
+    this.destroySubscriptions$.complete();
+  }
 
   onTileSelected(tile: BoardTile) {
     this.clearBoardFeatures();
@@ -108,6 +124,8 @@ export class BoardComponent {
     this.boardStore.setHintedTiles([]);
     this.boardStore.setCapturedTiles([]);
 
+    this.updateTurn();
+
     // clear selected tile
     this.clearSelectedTile();
   }
@@ -133,8 +151,17 @@ export class BoardComponent {
     this.boardStore.setHintedTiles([]);
     this.boardStore.setCapturedTiles([]);
 
+    this.updateTurn();
+
     // clear selected tile
     this.clearSelectedTile();
+  }
+
+  private updateTurn(): void {
+    const currentTurn = this.boardStore.getTurn();
+    const newTurn = currentTurn === BoardTurn.WHITE ? BoardTurn.BLACK : BoardTurn.WHITE;
+
+    this.boardStore.setCurrentTurn(newTurn);
   }
 
   private clearBoardFeatures() {
@@ -158,6 +185,12 @@ export class BoardComponent {
 
     // otherwise, no tile is selected
     this.selectTile(tile);
+
+    // check if the tile has a piece of the current turn
+    const currentTurn = this.boardStore.getTurn();
+    if ((tile.piece?.color as unknown as BoardTurn) !== currentTurn) {
+      return false;
+    }
 
     return true;
   }
