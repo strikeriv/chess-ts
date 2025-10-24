@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { BoardRotation, BoardTile, BoardTurn } from './interfaces/board.interface';
+import { BoardRotation, BoardTile, BoardTurn, TextColor, TileColor } from './interfaces/board.interface';
 import { PieceComponent } from './piece/piece.component';
 import { MoveType } from './piece/services/interfaces/moves.interface';
 import { MovesService } from './piece/services/moves.service';
@@ -212,5 +212,18 @@ export class BoardComponent implements OnInit, OnDestroy {
       this.boardStore.setCapturedTiles([]);
       this.boardStore.setSelectedTile(undefined);
     }
+  }
+
+  // misc stuff for board
+  getTextColorClass(tile: BoardTile): string {
+    return tile.color === TileColor.LIGHT ? TextColor.LIGHT : TextColor.DARK;
+  }
+
+  indexToFile(index: number): string {
+    return String.fromCodePoint('a'.codePointAt(0)! + index);
+  }
+
+  indexToRank(index: number): string {
+    return String.fromCodePoint('8'.codePointAt(0)! - index);
   }
 }
