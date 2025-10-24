@@ -23,11 +23,11 @@
 
           <!-- Render Text on tiles -->
           @if (fIndex === 7) {
-            <span class="absolute right-0 bottom-0 text-[1.5rem] font-bold pr-[3px]" [ngClass]="[tile.color === 'bg-orange-300' ? 'text-yellow-800' : 'text-orange-300']">{{ indexToFile(tIndex) }}</span>
+            <span class="absolute right-0 bottom-0 text-[1.5rem] font-bold pr-[3px]" [ngClass]="[getTextColorClass(tile)]">{{ indexToFile(tIndex) }}</span>
           }
 
           @if (tIndex === 0) {
-            <span class="absolute left-0 top-0 text-[1.5rem] font-bold pl-[3px]" [ngClass]="[tile.color === 'bg-orange-300' ? 'text-yellow-800' : 'text-orange-300']">{{ indexToRank(fIndex) }}</span>
+            <span class="absolute left-0 top-0 text-[1.5rem] font-bold pl-[3px]" [ngClass]="[getTextColorClass(tile)]">{{ indexToRank(fIndex) }}</span>
           }
         </div>
       }

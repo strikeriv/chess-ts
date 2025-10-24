@@ -34,3 +34,8 @@ export enum TileColor {
   LIGHT = 'bg-orange-300',
   DARK = 'bg-yellow-800',
 }
+
+export enum TextColor {
+  LIGHT = 'text-yellow-800',
+  DARK = 'text-orange-300',
+}
