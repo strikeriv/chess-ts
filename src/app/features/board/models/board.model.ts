@@ -36,7 +36,8 @@ export const BaseBoard: Partial<Record<ChessSquare, Piece>> = {
   // D7: BlackPawn,
   D6: BlackPawn,
   E7: BlackPawn,
-  F7: BlackPawn,
+  //F7: BlackPawn,
+  F6: BlackPawn,
   G7: BlackPawn,
   H7: BlackPawn,
 };

@@ -190,6 +190,9 @@
   .left-0 {
     left: calc(var(--spacing) * 0);
   }
+  .block {
+    display: block;
+  }
   .flex {
     display: flex;
   }

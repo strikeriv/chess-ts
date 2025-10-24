@@ -1,21 +1,22 @@
 import { Injectable } from '@angular/core';
 import { BoardTile } from '../../interfaces/board.interface';
 import { PieceColor, PieceType } from '../../models/pieces/piece.model';
+import { ChessSquare } from '../../services/notation/models/notation.model';
 import { NotationService } from '../../services/notation/notation.service';
 import { BoardStore } from '../../store/board.store';
 import { IntermediaryMove, Move, MoveType, MovingPiece } from './interfaces/moves.interface';
+import { BishopService } from './piece-moves/bishop.service';
+import { KingService } from './piece-moves/king.service';
 import { KnightService } from './piece-moves/knight.service';
 import { PawnService } from './piece-moves/pawn.service';
-import { RookService } from './piece-moves/rook.service';
-import { BishopService } from './piece-moves/bishop.service';
 import { QueenService } from './piece-moves/queen.service';
-import { KingService } from './piece-moves/king.service';
-import { ChessSquare } from '../../services/notation/models/notation.model';
+import { RookService } from './piece-moves/rook.service';
 
 @Injectable()
 export class MovesService {
   board: BoardTile[][];
 
+  allMoves: Move[] = []; // all moves on the board
   validMoves: Move[] = [];
   checkingMoves: Move[] = [];
 
@@ -33,41 +34,11 @@ export class MovesService {
     this.board = this.boardStore.getTiles();
   }
 
+  // need skip checks since
   calculateAllMoves(): Map<ChessSquare, Move[]> {
+    this.allMoves = [];
+
     const allMoves = new Map<ChessSquare, Move[]>([...this.calculateAllWhiteMoves(), ...this.calculateAllBlackMoves()]);
-
-    if (this.boardStore.getCheckingSquares().length > 0) {
-      // in check, so filter moves
-      const checkingSquares = this.boardStore.getCheckingSquares();
-      const filteredMoves = new Map<ChessSquare, Move[]>();
-
-      for (const [square, moves] of allMoves) {
-        const filtered = moves.filter((move) => {
-          // only keep moves that resolve the check
-          // remove the king move also
-          const tile = this.boardStore
-            .getTiles()
-            .flat()
-            .find((t) => t.square === square)!;
-
-          if (tile.piece?.type === PieceType.KING) {
-            // king can only move if it moves out of check
-            // this can be determined by seeing if the move square is in checking squares
-
-            return false;
-          }
-
-          return checkingSquares.includes(move.square);
-        });
-
-        if (filtered.length > 0) {
-          filteredMoves.set(square, filtered);
-        }
-      }
-
-      console.log(filteredMoves, 'filtered moves in check');
-      return filteredMoves;
-    }
 
     return allMoves;
   }
@@ -83,6 +54,8 @@ export class MovesService {
         }
       }
     }
+
+    this.allMoves.push(...Array.from(allMoves.values()).flat());
 
     return allMoves;
   }
@@ -224,26 +197,7 @@ export class MovesService {
 
     if (tile.piece) {
       if (tile.piece.type === PieceType.KING && tile.piece.color !== movingTile.piece!.color) {
-        // opposing king is in check
-        console.log(move, movingTile, 'king is in check!');
-        // set checking move
-
-        move.isCheckingMove = true;
-
-        // since this move is a check move, we need to set all predecessors as checking moves too
-        console.log(move, 'move');
-        this.updatePredecessorCheckingMoves(move);
-
-        // set valid moves to only checking moves
-        const capturePieceMove = this.intermediaryMoveToMove(move, MoveType.CAPTURE);
-        const checkingMoves = this.validMoves.filter((m) => m.isCheckingMove);
-        checkingMoves.push(capturePieceMove);
-
-        console.log(checkingMoves, 'checking moves');
-        console.log(this.validMoves, 'all valid moves');
-
-        // moving tile should also be counted as a move, since you can capture the piece putting king in check
-        this.boardStore.setCheckingSquares([...checkingMoves.map((m) => m.square), movingTile.square]);
+        this.updateMovesOnCheck(movingTile, move);
       }
 
       // only able to capture opposite color
@@ -251,6 +205,30 @@ export class MovesService {
     }
 
     return false;
+  }
+
+  private updateMovesOnCheck(movingTile: BoardTile, move: IntermediaryMove) {
+    // opposing king is in check
+    console.log(move, movingTile, 'king is in check!');
+    // set checking move
+
+    move.isCheckingMove = true;
+
+    // since this move is a check move, we need to set all predecessors as checking moves too
+    console.log(move, 'move');
+    this.updatePredecessorCheckingMoves(move);
+
+    // set valid moves to only checking moves
+    const capturePieceMove = this.intermediaryMoveToMove(move, MoveType.CAPTURE);
+    const checkingMoves = this.validMoves.filter((m) => m.isCheckingMove);
+    checkingMoves.push(capturePieceMove);
+
+    console.log(checkingMoves, 'checking moves');
+    console.log(this.validMoves, 'all valid moves');
+
+    // moving tile should also be counted as a move, since you can capture the piece putting king in check
+    console.log([...checkingMoves.map((m) => m.square), movingTile.square], 'checking squares');
+    this.boardStore.setCheckingSquares([...checkingMoves.map((m) => m.square), movingTile.square]);
   }
 
   // determines the move type

@@ -38,7 +38,9 @@ export class BoardComponent implements OnInit, OnDestroy {
     private readonly movesService: MovesService,
     private readonly checkService: CheckService,
     private readonly boardStore: BoardStore,
-  ) {}
+  ) {
+    this.boardStore.setValidMoves(this.movesService.calculateAllMoves());
+  }
 
   ngOnInit(): void {
     this.turn$.pipe(takeUntil(this.destroySubscriptions$)).subscribe((currentTurn) => {
@@ -68,12 +70,20 @@ export class BoardComponent implements OnInit, OnDestroy {
       this.clearBoardFeatures();
       this.clearSelectedTile();
     }
+
+    // if a capture or move was made, need to check for checks
+    if (isHinted || isCapture) {
+      const inCheck = this.checkService.isInCheck();
+
+      if (inCheck) {
+        this.boardStore.setValidMoves(this.checkService.filterCheckingMoves());
+      } else {
+        this.boardStore.setValidMoves(this.movesService.calculateAllMoves());
+      }
+    }
   }
 
   private onPieceSelected(tile: BoardTile): void {
-    // we need to calculate all valid moves
-    this.boardStore.setValidMoves(this.movesService.calculateAllMoves());
-
     const doShowFeatures = this.updateSelectedTile(tile);
     if (!doShowFeatures) return;
 

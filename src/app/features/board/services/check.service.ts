@@ -4,6 +4,7 @@ import { PieceColor, PieceType } from '../models/pieces/piece.model';
 import { Move } from '../piece/services/interfaces/moves.interface';
 import { MovesService } from '../piece/services/moves.service';
 import { BoardStore } from '../store/board.store';
+import { ChessSquare } from './notation/models/notation.model';
 
 @Injectable()
 export class CheckService {
@@ -48,38 +49,67 @@ export class CheckService {
   }
 
   // returns a map of moves that takes the player out of check
-  // basically, filters moves that do not resolve the check
-  // filterCheckingMoves(): Map<string, Move[]> {
-  //   const kingTile = this.findKingPosition();
-  //   const validMoves = new Map<string, Move[]>();
+  // piece on a square -> valid moves to get out of check
+  // can involve capturing the checking piece, blocking the check, or moving the king
+  filterCheckingMoves(): Map<ChessSquare, Move[]> {
+    const kingTile = this.findKingPosition();
+    const initialValidMoves = this.determineValidMoves();
 
-  // }
+    // initial valid moves only holds one-step moves to get out of check
+    // we need to two final things: check if the piece is being defended.
+    // if so, it can't be captured, otherwise allow king to capture.
+    const validMovesWithKingCaptures = this.determineKingCaptures(initialValidMoves);
 
-  // private determineCheckingPieces(): Map<ChessSquare, BoardTile[]> {
-  //   // loop through moves, find those that target the king's square
+    // we also need to filer moves that can block the check, but make sure that moving that piece doesn't put the king in check again
+    // if so, remove that move
 
-  //   // square of piece putting king in check, and moves that target it
-  //   // for instance, bishop putting king in check, all diagonal moves to block/capture it
-  //   const kingTile = this.findKingPosition();
-  //   const checkingPieces = new Map<ChessSquare, BoardTile[]>();
+    return validMovesWithKingCaptures;
+  }
 
-  //   this.opponentMoves.forEach((moves, square) => {
-  //     // console.log(moves, square, 'moves per square');
-  //     if (moves.some((move) => move.square === kingTile.square)) {
-  //       // this piece sees the king, get moves for square
-  //       // will exist, since it sees king & will have valid moves since it moved there
-  //       const movesForPiece = this.opponentMoves.get(square)!;
-  //       console.log(movesForPiece, 'moves for piece');
-  //       // const tile =
+  // calculates the valid squares that piece(s) can move to
+  // includes the piece that is checking the king, which is not normally allowed
+  private determineValidMoves(): Map<ChessSquare, Move[]> {
+    const kingTile = this.findKingPosition();
+    const opponentMoves = kingTile.piece!.color === PieceColor.BLACK ? this.movesService.calculateAllBlackMoves() : this.movesService.calculateAllWhiteMoves();
 
-  //       // if (tile) {
-  //       //   checkingPieces.set(square as ChessSquare, [tile]);
-  //       // }
-  //     }
-  //   });
+    // we need to first determine the moves that are placing the king in check
+    const checkingMoves = this.boardStore.getCheckingSquares().filter((square) => square !== kingTile.square); // can't capture king
 
-  //   return checkingPieces;
-  // }
+    // filter out opponents moves for when they are in check
+    const filteredMoves = new Map<ChessSquare, Move[]>();
+
+    Array.from(opponentMoves.entries()).forEach((movePair) => {
+      const [moveSquare, moves] = movePair;
+
+      for (const move of moves) {
+        const { square } = move;
+
+        // if king, king cannot move into check
+        if (moveSquare === kingTile.square) {
+          // pass current move if square is in check, since king cannot move into check
+          if (checkingMoves.includes(square)) {
+            continue;
+          }
+        } else if (!checkingMoves.includes(square)) {
+          // for any other piece, just make sure the move is capturing the checking piece
+          continue;
+        }
+
+        const existing = filteredMoves.get(moveSquare);
+        if (existing) {
+          filteredMoves.set(moveSquare, [...existing, move]);
+        } else {
+          filteredMoves.set(moveSquare, [move]);
+        }
+      }
+    });
+
+    return filteredMoves;
+  }
+
+  private determineKingCaptures(moves: Map<ChessSquare, Move[]>): Map<ChessSquare, Move[]> {
+    return moves;
+  }
 
   private findKingPosition(): BoardTile {
     const tiles = this.boardStore.getTiles();
