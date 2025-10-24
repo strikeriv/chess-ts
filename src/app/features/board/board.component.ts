@@ -16,11 +16,13 @@ import { NotationService } from './services/notation/notation.service';
 import { BoardStore } from './store/board.store';
 import { Subject, takeUntil } from 'rxjs';
 import { CheckService } from './services/check.service';
+import { SoundService } from './services/sound.service';
+import { Sounds } from './interfaces/sound.interface';
 
 @Component({
   selector: 'app-board',
   imports: [CommonModule, PieceComponent],
-  providers: [BishopService, BoardService, BoardStore, CheckService, KingService, KnightService, NotationService, MovesService, PawnService, QueenService, RookService, SharedService],
+  providers: [BishopService, BoardService, BoardStore, CheckService, KingService, KnightService, NotationService, MovesService, PawnService, QueenService, RookService, SharedService, SoundService],
   templateUrl: './board.component.html',
   styleUrl: './board.component.scss',
 })
@@ -35,6 +37,7 @@ export class BoardComponent implements OnInit, OnDestroy {
 
   constructor(
     private readonly notationService: NotationService,
+    private readonly soundService: SoundService,
     private readonly movesService: MovesService,
     private readonly checkService: CheckService,
     private readonly boardStore: BoardStore,
@@ -152,6 +155,8 @@ export class BoardComponent implements OnInit, OnDestroy {
 
     this.updateTurn();
 
+    this.soundService.playSound(Sounds.CAPTURE);
+
     // clear selected tile
     this.clearSelectedTile();
   }
@@ -178,6 +183,8 @@ export class BoardComponent implements OnInit, OnDestroy {
     this.boardStore.setCapturedTiles([]);
 
     this.updateTurn();
+
+    this.soundService.playSound(Sounds.MOVE);
 
     // clear selected tile
     this.clearSelectedTile();
