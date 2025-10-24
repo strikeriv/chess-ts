@@ -78,6 +78,7 @@ export class BoardComponent implements OnInit, OnDestroy {
       if (inCheck) {
         this.boardStore.setValidMoves(this.checkService.filterCheckingMoves());
       } else {
+        this.boardStore.setCheckingSquares([]);
         this.boardStore.setValidMoves(this.movesService.calculateAllMoves());
       }
     }
@@ -99,18 +100,25 @@ export class BoardComponent implements OnInit, OnDestroy {
       const { square, type, isCheckingMove } = move;
       const { x, y } = this.notationService.chessToArrayNotation(square);
 
-      const tile = this.boardStore.getTiles()[x][y];
+      const moveTile = this.boardStore.getTiles()[x][y];
 
       if (isCheckingMove) {
         continue;
       }
 
       if (type === MoveType.NORMAL) {
-        tile.isHint = true;
-        hintedTiles.push(tile);
+        moveTile.isHint = true;
+        hintedTiles.push(moveTile);
       } else if (type === MoveType.CAPTURE) {
-        tile.isCapture = true;
-        capturedTiles.push(tile);
+        if (moveTile.isGuarded) {
+          // check if opposing piece
+          if (moveTile.piece!.color === tile.piece!.color) {
+            continue;
+          }
+        }
+
+        moveTile.isCapture = true;
+        capturedTiles.push(moveTile);
       }
     }
 
@@ -131,10 +139,12 @@ export class BoardComponent implements OnInit, OnDestroy {
     this.boardStore.getTiles()[oX][oY].piece = undefined;
 
     // replace piece in correct spot
-    this.boardStore.getTiles()[nX][nY].piece = selectedTile.piece;
+    const newTile = this.boardStore.getTiles()[nX][nY];
+    newTile.piece = selectedTile.piece;
 
     // update variables to keep state
-    this.boardStore.getTiles()[nX][nY].isHint = false;
+    newTile.isHint = false;
+    newTile.isGuarded = false;
 
     // update store
     this.boardStore.setHintedTiles([]);

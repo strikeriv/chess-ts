@@ -74,10 +74,11 @@ export class CheckService {
 
     // we need to first determine the moves that are placing the king in check
     const checkingMoves = this.boardStore.getCheckingSquares().filter((square) => square !== kingTile.square); // can't capture king
+    const checkingOrigins = new Set(this.movesService.checkingMoves.map((move) => move.origin));
 
     // filter out opponents moves for when they are in check
     const filteredMoves = new Map<ChessSquare, Move[]>();
-
+    console.log(checkingOrigins, 'origins');
     Array.from(opponentMoves.entries()).forEach((movePair) => {
       const [moveSquare, moves] = movePair;
 
@@ -88,7 +89,10 @@ export class CheckService {
         if (moveSquare === kingTile.square) {
           // pass current move if square is in check, since king cannot move into check
           if (checkingMoves.includes(square)) {
-            continue;
+            console.log(moveSquare, kingTile, square, 'king move being considered');
+            if (!checkingOrigins.has(square)) {
+              continue;
+            }
           }
         } else if (!checkingMoves.includes(square)) {
           // for any other piece, just make sure the move is capturing the checking piece
@@ -108,15 +112,55 @@ export class CheckService {
   }
 
   private determineKingCaptures(moves: Map<ChessSquare, Move[]>): Map<ChessSquare, Move[]> {
-    console.log(moves, 'moves before king capture logic');
     // to start, determine the moves available to the side who is placing in check
     const kingTile = this.findKingPosition();
-    const checkingTile = this.movesService.checkingMoves[0].origin;
+
+    // filter our origino
+    const checkingOrigins = new Set(this.movesService.checkingMoves.map((move) => move.origin));
     const checkingSideMoves = kingTile.piece!.color === PieceColor.BLACK ? this.movesService.calculateAllWhiteMoves() : this.movesService.calculateAllBlackMoves();
 
-    console.log(checkingTile, 'checking side moves');
-    console.log(this.movesService.checkingMoves, 'checking moves');
-    return moves;
+    // now, see if the checking side moves (side placing in check) are guarded
+    // map contains guarded pieces that the king cannot capture
+    const guardedSquares: Set<ChessSquare> = new Set<ChessSquare>();
+    console.log(checkingSideMoves, 'hmm');
+    Array.from(checkingSideMoves.entries()).forEach((movePair) => {
+      const [moveSquare, sideMoves] = movePair;
+
+      for (const move of sideMoves) {
+        const { square } = move;
+        const tile = this.boardStore
+          .getTiles()
+          .flat()
+          .find((t) => t.square === square)!;
+
+        if (tile.isGuarded && checkingOrigins.has(moveSquare)) {
+          console.log(move, 'move is guarded?');
+          guardedSquares.add(moveSquare);
+        }
+      }
+    });
+
+    // now, filter out moves that capture guarded squares
+    const updatedMoves = new Map<ChessSquare, Move[]>();
+
+    // only remove moves for the king square that are in guarded squares.
+    // other pieces can still capture guarded pieces to block check
+    console.log(guardedSquares, 'squares that are guarded');
+    moves.forEach((moveList, square) => {
+      if (square === kingTile.square) {
+        const filteredMoves = moveList.filter((move) => !guardedSquares.has(move.square));
+        if (filteredMoves.length > 0) {
+          updatedMoves.set(square, filteredMoves);
+        }
+      } else {
+        updatedMoves.set(square, moveList);
+      }
+    });
+
+    console.log(moves, 'moves before king capture logic');
+
+    console.log(updatedMoves, 'moves after king capture logic');
+    return updatedMoves;
   }
 
   private findKingPosition(): BoardTile {

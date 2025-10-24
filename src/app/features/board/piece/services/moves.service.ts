@@ -37,6 +37,8 @@ export class MovesService {
   // need skip checks since
   calculateAllMoves(): Map<ChessSquare, Move[]> {
     this.allMoves = [];
+    this.validMoves = [];
+    this.checkingMoves = [];
 
     const allMoves = new Map<ChessSquare, Move[]>([...this.calculateAllWhiteMoves(), ...this.calculateAllBlackMoves()]);
 
@@ -201,8 +203,12 @@ export class MovesService {
         this.updateMovesOnCheck(movingTile, move);
       }
 
-      // only able to capture opposite color
-      return tile.piece.color != movingTile.piece!.color;
+      // only able to capture opposite color, so set guarded property
+      if (tile.piece.color === movingTile.piece!.color) {
+        tile.isGuarded = true; // guarded by its own piece
+      }
+
+      return true;
     }
 
     return false;

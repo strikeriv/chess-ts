@@ -20,6 +20,7 @@ export type BoardTile = {
   piece?: Piece;
 
   // modifiers
+  isGuarded: boolean;
   isInCheck: boolean;
 
   isSelected: boolean;
