@@ -21,11 +21,7 @@ export class BoardStore extends ComponentStore<BoardState> {
   readonly tiles$ = this.select((state) => state.board.tiles);
   readonly turn$ = this.select((state) => state.currentTurn);
 
-  readonly selectedTile$ = this.select((state) => state.selectedTile);
   readonly validMoves$ = this.select((state) => state.validMoves);
-
-  readonly hintedTiles$ = this.select((state) => state.hintedTiles);
-  readonly capturedTiles$ = this.select((state) => state.capturedTiles);
 
   getTiles(): BoardTile[][] {
     return this.get().board.tiles;
@@ -41,18 +37,6 @@ export class BoardStore extends ComponentStore<BoardState> {
 
   getValidMoves(): Map<ChessSquare, Move[]> {
     return this.get().validMoves;
-  }
-
-  getCheckingSquares(): ChessSquare[] {
-    return this.get().checkingSquares;
-  }
-
-  getHintedTiles(): BoardTile[] {
-    return this.get().hintedTiles;
-  }
-
-  getCapturedTiles(): BoardTile[] {
-    return this.get().capturedTiles;
   }
 
   // setters
@@ -77,11 +61,6 @@ export class BoardStore extends ComponentStore<BoardState> {
   readonly setValidMoves = this.updater((state, validMoves: Map<ChessSquare, Move[]>) => ({
     ...state,
     validMoves,
-  }));
-
-  readonly setCheckingSquares = this.updater((state, checkingSquares: ChessSquare[]) => ({
-    ...state,
-    checkingSquares,
   }));
 
   readonly setHintedTiles = this.updater((state, hintedTiles: BoardTile[]) => ({

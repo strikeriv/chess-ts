@@ -228,9 +228,6 @@ export class MovesService {
     checkingMoves.push(capturePieceMove);
 
     this.checkingMoves = checkingMoves;
-
-    // moving tile should also be counted as a move, since you can capture the piece putting king in check
-    this.boardStore.setCheckingSquares([...checkingMoves.map((m) => m.square), movingTile.square]);
   }
 
   // determines the move type

@@ -57,12 +57,9 @@ export class BoardComponent implements OnInit, OnDestroy {
   }
 
   onTileSelected(tile: BoardTile) {
-    this.clearBoardFeatures();
+    const { isHint, isCapture } = tile;
 
-    const isHinted = this.boardStore.getHintedTiles().find((hT) => hT.square === tile.square);
-    const isCapture = this.boardStore.getCapturedTiles().find((cT) => cT.square === tile.square);
-
-    if (isHinted) {
+    if (isHint) {
       this.movePieceToTile(tile);
     } else if (isCapture) {
       this.capturePieceOnTile(tile);
@@ -74,14 +71,17 @@ export class BoardComponent implements OnInit, OnDestroy {
       this.clearSelectedTile();
     }
 
-    // if a capture or move was made, need to check for checks
-    if (isHinted || isCapture) {
+    // if a capture or move was made, clear board features
+    if (isHint || isCapture) {
+      this.clearBoardFeatures();
+      this.clearSelectedTile();
+
+      // we also check for checks
       const inCheck = this.checkService.isInCheck();
 
       if (inCheck) {
         this.boardStore.setValidMoves(this.checkService.filterCheckingMoves());
       } else {
-        this.boardStore.setCheckingSquares([]);
         this.boardStore.setValidMoves(this.movesService.calculateAllMoves());
       }
     }
@@ -91,14 +91,7 @@ export class BoardComponent implements OnInit, OnDestroy {
     const doShowFeatures = this.updateSelectedTile(tile);
     if (!doShowFeatures) return;
 
-    // calculate valid moves for selected piece
-    // clear previous
-    const hintedTiles: BoardTile[] = [];
-    const capturedTiles: BoardTile[] = [];
-
     const moves = this.boardStore.getValidMoves().get(tile.square) || [];
-
-    // for now, highlight the valid moves
     for (const move of moves) {
       const { square, type, isCheckingMove } = move;
       const { x, y } = this.notationService.chessToArrayNotation(square);
@@ -111,28 +104,30 @@ export class BoardComponent implements OnInit, OnDestroy {
 
       if (type === MoveType.NORMAL) {
         moveTile.isHint = true;
-        hintedTiles.push(moveTile);
       } else if (type === MoveType.CAPTURE) {
-        if (moveTile.isGuarded) {
-          // check if opposing piece
-          if (moveTile.piece!.color === tile.piece!.color) {
-            continue;
-          }
-        }
+        // if (moveTile.isGuarded) {
+        //   // check if opposing piece
+        //   if (moveTile.piece!.color === tile.piece!.color) {
+        //     continue;
+        //   }
+        // }
+
+        // if (moveTile.color !== tile.color) {
+        //   moveTile.isCapture = true;
+        //   capturedTiles.push(moveTile);
+        // }
 
         moveTile.isCapture = true;
-        capturedTiles.push(moveTile);
       }
-    }
 
-    // update store
-    this.boardStore.setHintedTiles(hintedTiles);
-    this.boardStore.setCapturedTiles(capturedTiles);
+      console.log(moveTile, 'tile that has been updated');
+    }
   }
 
   private capturePieceOnTile(tile: BoardTile) {
     // player wants to capture piece on the square
     // update the piece for the tile we are moving
+    console.log('capturing');
     const selectedTile = { ...this.boardStore.getSelectedTile()! }; // a tile is selected if there are hints on the board
 
     const { x: oX, y: oY } = this.notationService.chessToArrayNotation(selectedTile.square);
@@ -148,10 +143,6 @@ export class BoardComponent implements OnInit, OnDestroy {
     // update variables to keep state
     newTile.isHint = false;
     newTile.isGuarded = false;
-
-    // update store
-    this.boardStore.setHintedTiles([]);
-    this.boardStore.setCapturedTiles([]);
 
     this.updateTurn();
 
@@ -178,10 +169,6 @@ export class BoardComponent implements OnInit, OnDestroy {
     // update variables to keep state
     this.boardStore.getTiles()[nX][nY].isCapture = false;
 
-    // update store
-    this.boardStore.setHintedTiles([]);
-    this.boardStore.setCapturedTiles([]);
-
     this.updateTurn();
 
     this.soundService.playSound(Sounds.MOVE);
@@ -198,12 +185,12 @@ export class BoardComponent implements OnInit, OnDestroy {
   }
 
   private clearBoardFeatures() {
-    for (const tile of this.boardStore.getHintedTiles()) {
-      tile.isHint = false;
-    }
-
-    for (const tile of this.boardStore.getCapturedTiles()) {
-      tile.isCapture = false;
+    for (let rank of this.boardStore.getTiles()) {
+      for (let tile of rank) {
+        tile.isHint = false;
+        tile.isCapture = false;
+        tile.isGuarded = false;
+      }
     }
   }
 
@@ -240,9 +227,6 @@ export class BoardComponent implements OnInit, OnDestroy {
     const selectedTile = this.boardStore.getSelectedTile();
     if (selectedTile) {
       selectedTile.isSelected = false;
-
-      this.boardStore.setHintedTiles([]);
-      this.boardStore.setCapturedTiles([]);
       this.boardStore.setSelectedTile(undefined);
     }
   }
